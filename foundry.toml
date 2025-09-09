@@ -1,10 +1,10 @@
 [profile.default]
 evm_version = "cancun"
 ffi = true
-fs_permissions = [{access = "read-write", path = ".forge-snapshots/"}]
+fs_permissions = [{ access = "read-write", path = ".forge-snapshots/" }]
 libs = ["lib"]
 out = "out"
-solc_version = "0.8.30"
+solc_version = "0.8.26"
 src = "src"
 via_ir = false
 
