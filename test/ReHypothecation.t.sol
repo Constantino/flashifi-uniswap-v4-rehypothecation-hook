@@ -66,6 +66,8 @@ contract ReHypothecationTest is Test, Deployers {
         (key,) = initPool(currency0, currency1, IHooks(address(hook)), fee, SQRT_PRICE_1_1);
         (noHookKey,) = initPool(currency0, currency1, IHooks(address(0)), fee, SQRT_PRICE_1_1);
 
+        // Call setVaults as the owner (the deployer)
+        vm.prank(address(this));
         hook.setVaults(address(yieldSource0), address(yieldSource1));
 
         IERC20(Currency.unwrap(currency0)).approve(address(hook), type(uint256).max);
@@ -78,6 +80,19 @@ contract ReHypothecationTest is Test, Deployers {
     function test_already_initialized_reverts() public {
         vm.expectRevert();
         initPool(currency0, currency1, IHooks(address(hook)), fee, SQRT_PRICE_1_1);
+    }
+
+    function test_setVaults_onlyOwner() public {
+        address nonOwner = makeAddr("nonOwner");
+
+        // Test that non-owner cannot call setVaults
+        vm.prank(nonOwner);
+        vm.expectRevert();
+        hook.setVaults(address(yieldSource0), address(yieldSource1));
+
+        // Test that owner can call setVaults
+        vm.prank(address(this));
+        hook.setVaults(address(yieldSource0), address(yieldSource1));
     }
 
     function test_full_cycle() public {

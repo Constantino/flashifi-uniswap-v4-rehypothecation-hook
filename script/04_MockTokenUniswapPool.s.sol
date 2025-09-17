@@ -16,7 +16,7 @@ import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {HookMiner} from "@uniswap/v4-periphery/src/utils/HookMiner.sol";
 import {ReHypothecation} from "../src/ReHypothecation.sol";
@@ -63,7 +63,10 @@ contract MockTokenUniswapPool is Script {
         vm.startBroadcast();
 
         // Deploy a new hook instance for this test
+        console.log("Deploying ReHypothecation hook...");
         deployHook();
+        console.log("Hook deployed at:", address(hook));
+        console.log("Hook owner:", hook.owner());
 
         // Deploy mock tokens
         token0 = new MockERC20("Token00", "T00");
@@ -87,8 +90,13 @@ contract MockTokenUniswapPool is Script {
         token0.approve(address(hook), type(uint256).max);
         token1.approve(address(hook), type(uint256).max);
 
-        // Set the vault addresses for the hook
+        // Set the vault addresses for the hook (as owner)
+        // The deployer (msg.sender) is the owner of the hook contract
+        console.log("Setting vault addresses for hook...");
+        console.log("Vault0 address:", address(vault0));
+        console.log("Vault1 address:", address(vault1));
         hook.setVaults(address(vault0), address(vault1));
+        console.log("Vault addresses set successfully");
 
         // Define out PoolKey - ensure currencies are in correct order (smaller address first)
         address token0Addr = address(token0);
@@ -108,9 +116,12 @@ contract MockTokenUniswapPool is Script {
         });
 
         // First initialize the pool
+        console.log("Initializing pool...");
         IPoolManager(POOL_MANAGER).initialize(poolKey, SQRTPRICEX96);
+        console.log("Pool initialized successfully");
 
         // Add liquidity
+        console.log("Adding initial liquidity to pool...");
         modifyLiquidityTest.modifyLiquidity(
             poolKey,
             ModifyLiquidityParams({
@@ -121,6 +132,14 @@ contract MockTokenUniswapPool is Script {
             }),
             Constants.ZERO_BYTES
         );
+        console.log("Initial liquidity added successfully");
+
+        console.log("Deployment completed successfully!");
+        console.log("Hook address:", address(hook));
+        console.log("Token0 address:", address(token0));
+        console.log("Token1 address:", address(token1));
+        console.log("Vault0 address:", address(vault0));
+        console.log("Vault1 address:", address(vault1));
 
         vm.stopBroadcast();
     }
@@ -128,6 +147,7 @@ contract MockTokenUniswapPool is Script {
     function deployHook() internal {
         // Hook contracts must have specific flags encoded in the address
         uint160 flags = uint160(Hooks.BEFORE_INITIALIZE_FLAG | Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG);
+        console.log("Mining hook address with flags:", flags);
 
         // Mine a salt that will produce a hook address with the correct flags
         bytes memory constructorArgs = abi.encode(IPoolManager(POOL_MANAGER));
@@ -135,6 +155,8 @@ contract MockTokenUniswapPool is Script {
         (address hookAddr, bytes32 salt) =
             HookMiner.find(CREATE2_FACTORY, flags, type(ReHypothecation).creationCode, constructorArgs);
 
+        console.log("Found hook address:", hookAddr);
+        console.log("Using salt:", vm.toString(salt));
         vm.label(hookAddr, "HookAddress");
 
         // Deploy the hook using CREATE2
@@ -142,5 +164,6 @@ contract MockTokenUniswapPool is Script {
         vm.label(address(hook), "ReHypothecation");
 
         require(address(hook) == hookAddr, "DeployHookScript: Hook Address Mismatch");
+        console.log("Hook deployed successfully with correct address");
     }
 }

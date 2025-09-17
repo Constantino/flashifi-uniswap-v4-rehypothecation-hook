@@ -7,6 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {IPoolManager, SwapParams, ModifyLiquidityParams} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
@@ -29,7 +30,7 @@ import {LiquidityAmounts} from "@uniswap/v4-periphery/src/libraries/LiquidityAmo
 import {Position} from "@uniswap/v4-core/src/libraries/Position.sol";
 import {CurrencySettler} from "@openzeppelin/uniswap-hooks/src/utils/CurrencySettler.sol";
 
-contract ReHypothecation is BaseHook, ERC20 {
+contract ReHypothecation is BaseHook, ERC20, Ownable {
     using TransientStateLibrary for IPoolManager;
     using StateLibrary for IPoolManager;
     using CurrencySettler for Currency;
@@ -49,9 +50,13 @@ contract ReHypothecation is BaseHook, ERC20 {
     address private _vault0;
     address private _vault1;
 
-    constructor(IPoolManager _poolManager) BaseHook(_poolManager) ERC20("FlashiFiReHypothecation", "FFRH") {}
+    constructor(IPoolManager _poolManager)
+        BaseHook(_poolManager)
+        ERC20("FlashiFiReHypothecation", "FFRH")
+        Ownable(msg.sender)
+    {}
 
-    function setVaults(address vault0_, address vault1_) external {
+    function setVaults(address vault0_, address vault1_) external onlyOwner {
         _vault0 = vault0_;
         _vault1 = vault1_;
     }
