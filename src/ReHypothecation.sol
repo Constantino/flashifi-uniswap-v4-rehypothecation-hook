@@ -49,17 +49,6 @@ contract ReHypothecation is BaseHook, ERC20 {
     address private _vault0;
     address private _vault1;
 
-    // NOTE: ---------------------------------------------------------
-    // state variables should typically be unique to a pool
-    // a single hook contract should be able to service multiple pools
-    // ---------------------------------------------------------------
-
-    mapping(PoolId => uint256 count) public beforeSwapCount;
-    mapping(PoolId => uint256 count) public afterSwapCount;
-
-    mapping(PoolId => uint256 count) public beforeAddLiquidityCount;
-    mapping(PoolId => uint256 count) public beforeRemoveLiquidityCount;
-
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) ERC20("FlashiFiReHypothecation", "FFRH") {}
 
     function setVaults(address vault0_, address vault1_) external {
@@ -86,7 +75,7 @@ contract ReHypothecation is BaseHook, ERC20 {
         });
     }
 
-    function addReHypothecatedLiquidity(uint128 liquidity) external payable returns (BalanceDelta delta) {
+    function addReHypothecatedLiquidity(uint128 liquidity) external returns (BalanceDelta delta) {
         if (_poolKey.currency1.isAddressZero()) revert PoolKeyNotInitialized();
 
         if (liquidity == 0) revert ZeroLiquidity();
@@ -97,7 +86,6 @@ contract ReHypothecation is BaseHook, ERC20 {
         uint256 amount1 = uint256(int256(-delta.amount1()));
 
         IERC20(Currency.unwrap(_poolKey.currency0)).safeTransferFrom(msg.sender, address(this), amount0);
-
         IERC20(Currency.unwrap(_poolKey.currency1)).safeTransferFrom(msg.sender, address(this), amount1);
 
         _depositToVault(_poolKey.currency0, amount0);
@@ -260,8 +248,6 @@ contract ReHypothecation is BaseHook, ERC20 {
         override
         returns (bytes4, BeforeSwapDelta, uint24)
     {
-        // beforeSwapCount[key.toId()]++;
-
         // Get the amount of liquidity to be provided from yield sources
         uint128 liquidityToUse = _getLiquidityToUse(key, params);
 
@@ -278,8 +264,6 @@ contract ReHypothecation is BaseHook, ERC20 {
         override
         returns (bytes4, int128)
     {
-        // afterSwapCount[key.toId()]++;
-
         // Get the hook owned liquidity currently in the pool
         uint128 liquidity = _getHookLiquidity(key);
         if (liquidity == 0) {
@@ -317,7 +301,6 @@ contract ReHypothecation is BaseHook, ERC20 {
         override
         returns (bytes4)
     {
-        beforeAddLiquidityCount[key.toId()]++;
         return BaseHook.beforeAddLiquidity.selector;
     }
 
@@ -326,7 +309,6 @@ contract ReHypothecation is BaseHook, ERC20 {
         override
         returns (bytes4)
     {
-        beforeRemoveLiquidityCount[key.toId()]++;
         return BaseHook.beforeRemoveLiquidity.selector;
     }
 
