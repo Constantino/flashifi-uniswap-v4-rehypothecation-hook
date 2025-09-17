@@ -45,6 +45,18 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
     error PoolKeyNotInitialized();
     error AlreadyInitialized();
 
+    // Events
+    event VaultsSet(address indexed vault0, address indexed vault1);
+    event ReHypothecatedLiquidityAdded(
+        address indexed user, uint128 indexed liquidity, uint256 amount0, uint256 amount1
+    );
+    event ReHypothecatedLiquidityRemoved(
+        address indexed owner, uint128 indexed sharesAmount, uint256 amount0, uint256 amount1
+    );
+    event PoolInitialized(address indexed currency0, address indexed currency1, uint24 indexed fee, int24 tickSpacing);
+    event LiquidityProvided(bytes32 indexed poolId, uint128 indexed liquidity, uint256 amount0, uint256 amount1);
+    event LiquidityRemoved(bytes32 indexed poolId, uint128 indexed liquidity, uint256 amount0, uint256 amount1);
+
     PoolKey private _poolKey;
 
     address private _vault0;
@@ -59,6 +71,7 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
     function setVaults(address vault0_, address vault1_) external onlyOwner {
         _vault0 = vault0_;
         _vault1 = vault1_;
+        emit VaultsSet(vault0_, vault1_);
     }
 
     function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
@@ -97,6 +110,8 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
         _depositToVault(_poolKey.currency1, amount1);
 
         _mint(msg.sender, liquidity);
+
+        emit ReHypothecatedLiquidityAdded(msg.sender, liquidity, amount0, amount1);
     }
 
     function removeReHypothecatedLiquidity(address owner) external returns (BalanceDelta delta) {
@@ -118,7 +133,7 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
         _poolKey.currency0.transfer(owner, amount0);
         _poolKey.currency1.transfer(owner, amount1);
 
-        // emit ReHypothecatedLiquidityRemoved(owner, uint128(sharesAmount), amount0, amount1);
+        emit ReHypothecatedLiquidityRemoved(owner, uint128(sharesAmount), amount0, amount1);
     }
 
     function _getLiquidityToUse(PoolKey calldata key, SwapParams calldata)
@@ -258,7 +273,13 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
 
         // If there's liquidity to be provided, add it to the pool (in a Just-in-Time provision of liquidity)
         if (liquidityToUse > 0) {
-            _modifyLiquidity(liquidityToUse.toInt256());
+            BalanceDelta delta = _modifyLiquidity(liquidityToUse.toInt256());
+            emit LiquidityProvided(
+                PoolId.unwrap(key.toId()),
+                liquidityToUse,
+                uint256(int256(-delta.amount0())),
+                uint256(int256(-delta.amount1()))
+            );
         }
 
         return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
@@ -275,7 +296,10 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
             return (this.afterSwap.selector, 0);
         }
         // Remove all of the hook owned liquidity from the pool
-        _modifyLiquidity(-liquidity.toInt256());
+        BalanceDelta delta = _modifyLiquidity(-liquidity.toInt256());
+        emit LiquidityRemoved(
+            PoolId.unwrap(key.toId()), liquidity, uint256(int256(delta.amount0())), uint256(int256(delta.amount1()))
+        );
 
         // Assert the hook's deltas in each currency in order to zero them
         _assertHookDelta(key.currency0);
@@ -323,6 +347,9 @@ contract ReHypothecation is BaseHook, ERC20, Ownable {
 
         // Store the pool key to be used in other functions
         _poolKey = key;
+
+        emit PoolInitialized(Currency.unwrap(key.currency0), Currency.unwrap(key.currency1), key.fee, key.tickSpacing);
+
         return this.beforeInitialize.selector;
     }
 }
