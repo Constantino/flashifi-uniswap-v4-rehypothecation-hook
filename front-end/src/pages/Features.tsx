@@ -13,6 +13,7 @@ const Features: React.FC = () => {
     const [needsApproval, setNeedsApproval] = useState(false)
     const [tokenAddress, setTokenAddress] = useState('')
     const [isMinting, setIsMinting] = useState(false)
+    const [isApprovalsExpanded, setIsApprovalsExpanded] = useState(false)
 
     // Token addresses for approval
     const TOKEN_ADDRESSES = {
@@ -87,6 +88,48 @@ const Features: React.FC = () => {
     // Get FlashiFi shares balance
     const { data: flashifiSharesBalance, refetch: refetchFlashifiSharesBalance } = useReadContract({
         address: FLASHIFI_SHARES_ADDRESS as `0x${string}`,
+        abi: [
+            {
+                "constant": true,
+                "inputs": [
+                    { "name": "_owner", "type": "address" }
+                ],
+                "name": "balanceOf",
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "type": "function"
+            }
+        ],
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+        query: {
+            enabled: !!address && isConnected
+        }
+    })
+
+    // Get Token 1 balance
+    const { data: token1Balance, refetch: refetchToken1Balance } = useReadContract({
+        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
+        abi: [
+            {
+                "constant": true,
+                "inputs": [
+                    { "name": "_owner", "type": "address" }
+                ],
+                "name": "balanceOf",
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "type": "function"
+            }
+        ],
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+        query: {
+            enabled: !!address && isConnected
+        }
+    })
+
+    // Get Token 2 balance
+    const { data: token2Balance, refetch: refetchToken2Balance } = useReadContract({
+        address: TOKEN_ADDRESSES.token2 as `0x${string}`,
         abi: [
             {
                 "constant": true,
@@ -332,7 +375,7 @@ const Features: React.FC = () => {
                         ReHypothecation Hook
                     </h1>
 
-                    <div className="max-w-md mx-auto">
+                    <div className="max-w-4xl mx-auto">
 
                         <div className="mb-6">
                             <p className="text-sm text-gray-600 mb-4">
@@ -343,47 +386,101 @@ const Features: React.FC = () => {
                             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                                 <h3 className="text-sm font-medium text-green-800 mb-3">Get Test Tokens</h3>
                                 <p className="text-xs text-green-600 mb-4">
-                                    Mint 1000 units of both tokens to your connected address for testing purposes.
+                                    Mint 1000 units of both test tokens to your connected address for testing purposes.
                                 </p>
                                 <button
                                     onClick={handleMintTokens}
                                     disabled={!isConnected || isMinting}
                                     className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isMinting ? 'Minting Tokens...' : 'Mint 1000 Units of Both Tokens'}
+                                    {isMinting ? 'Minting Tokens...' : 'Mint 1000 units of both test tokens'}
                                 </button>
                             </div>
 
-                            {/* FlashiFi Shares Balance Section */}
-                            <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                                <h3 className="text-sm font-medium text-purple-800 mb-3">Your FlashiFi Shares</h3>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-xs text-purple-600 mb-1">Current Balance</p>
-                                        <p className="text-lg font-semibold text-purple-900">
-                                            {flashifiSharesBalance !== undefined
-                                                ? (Number(flashifiSharesBalance) / 1e18).toFixed(6)
-                                                : 'Loading...'
-                                            }
+                            {/* Token Balances - Horizontal Layout */}
+                            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* FlashiFi Shares Balance Section */}
+                                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-purple-800 mb-3">FlashiFi Shares</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-purple-600 mb-1">Current Balance</p>
+                                            <p className="text-lg font-semibold text-purple-900">
+                                                {flashifiSharesBalance !== undefined
+                                                    ? (Number(flashifiSharesBalance) / 1e18).toFixed(6)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchFlashifiSharesBalance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-purple-600 break-all">
+                                            <span className="font-mono">{FLASHIFI_SHARES_ADDRESS.slice(0, 6)}...{FLASHIFI_SHARES_ADDRESS.slice(-4)}</span>
                                         </p>
-                                        <p className="text-xs text-purple-500">FlashiFi Shares</p>
                                     </div>
-                                    <button
-                                        onClick={() => refetchFlashifiSharesBalance()}
-                                        disabled={!isConnected}
-                                        className="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Refresh
-                                    </button>
                                 </div>
-                                <p className="text-xs text-purple-600 mt-2">
-                                    Contract: <span className="font-mono">{FLASHIFI_SHARES_ADDRESS}</span>
-                                </p>
+
+                                {/* Token 1 Balance Section */}
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-blue-800 mb-3">Token 1</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-blue-600 mb-1">Current Balance</p>
+                                            <p className="text-lg font-semibold text-blue-900">
+                                                {token1Balance !== undefined
+                                                    ? (Number(token1Balance) / 1e18).toFixed(6)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchToken1Balance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-blue-600 break-all">
+                                            <span className="font-mono">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Token 2 Balance Section */}
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-orange-800 mb-3">Token 2</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-orange-600 mb-1">Current Balance</p>
+                                            <p className="text-lg font-semibold text-orange-900">
+                                                {token2Balance !== undefined
+                                                    ? (Number(token2Balance) / 1e18).toFixed(6)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchToken2Balance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-orange-600 break-all">
+                                            <span className="font-mono">{TOKEN_ADDRESSES.token2.slice(0, 6)}...{TOKEN_ADDRESSES.token2.slice(-4)}</span>
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="mb-4">
                                 <label htmlFor="liquidityAmount" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Liquidity Amount (FlashiFi Shares)
+                                    Liquidity Amount to deposit (in units of FlashiFi Shares)
                                 </label>
                                 <input
                                     id="liquidityAmount"
@@ -398,79 +495,108 @@ const Features: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Token Approval Section */}
-                            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <h3 className="text-sm font-medium text-blue-800 mb-3">Token Approvals Required</h3>
-                                <p className="text-xs text-blue-600 mb-4">
-                                    Before adding liquidity, you need to approve both tokens for the hook to spend them.
-                                </p>
+                            {/* Token Approval Section - Dropdown */}
+                            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg">
+                                <button
+                                    onClick={() => setIsApprovalsExpanded(!isApprovalsExpanded)}
+                                    className="w-full p-4 text-left flex items-center justify-between hover:bg-blue-100 transition-colors"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <h3 className="text-sm font-medium text-blue-800">Token Approvals Required</h3>
+                                        <span className="text-green-600 text-sm">✓</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-xs text-blue-600">
+                                            {approvalStates.token1.hookApproved && approvalStates.token2.hookApproved
+                                                ? 'All Approved'
+                                                : 'Action Required'
+                                            }
+                                        </span>
+                                        <svg
+                                            className={`w-4 h-4 text-blue-600 transition-transform ${isApprovalsExpanded ? 'rotate-180' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </button>
 
-                                {/* Token 1 Approval */}
-                                <div className="mb-3 p-3 bg-white rounded border">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-700">Token 1</p>
-                                            <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token1}</p>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            {approvalStates.token1.hookApproved ? (
-                                                <span className="text-green-600 text-sm font-medium">✓ Approved</span>
-                                            ) : (
-                                                <button
-                                                    onClick={handleApproveToken1}
-                                                    disabled={!isConnected || approvalStates.token1.isApproving || isLoading}
-                                                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    {approvalStates.token1.isApproving ? 'Approving...' : 'Approve'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between text-xs">
-                                            <span className="text-gray-500">Hook Address:</span>
-                                            <span className={approvalStates.token1.hookApproved ? 'text-green-600' : 'text-red-500'}>
-                                                {approvalStates.token1.hookApproved ? '✓ Approved' : '✗ Not Approved'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {isApprovalsExpanded && (
+                                    <div className="px-4 pb-4 space-y-4">
+                                        <p className="text-xs text-blue-600">
+                                            Before adding liquidity, you need to approve both tokens for the hook to spend them.
+                                        </p>
 
-                                {/* Token 2 Approval */}
-                                <div className="mb-3 p-3 bg-white rounded border">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-700">Token 2</p>
-                                            <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token2}</p>
+                                        {/* Token 1 Approval */}
+                                        <div className="p-3 bg-white rounded border">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-700">Token 1</p>
+                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token1}</p>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    {approvalStates.token1.hookApproved ? (
+                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleApproveToken1}
+                                                            disabled={!isConnected || approvalStates.token1.isApproving || isLoading}
+                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {approvalStates.token1.isApproving ? 'Approving...' : 'Approve'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">Hook Address:</span>
+                                                    <span className={approvalStates.token1.hookApproved ? 'text-green-600' : 'text-red-500'}>
+                                                        {approvalStates.token1.hookApproved ? '✓ Approved' : '✗ Not Approved'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center space-x-2">
-                                            {approvalStates.token2.hookApproved ? (
-                                                <span className="text-green-600 text-sm font-medium">✓ Approved</span>
-                                            ) : (
-                                                <button
-                                                    onClick={handleApproveToken2}
-                                                    disabled={!isConnected || approvalStates.token2.isApproving || isLoading}
-                                                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                    {approvalStates.token2.isApproving ? 'Approving...' : 'Approve'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between text-xs">
-                                            <span className="text-gray-500">Hook Address:</span>
-                                            <span className={approvalStates.token2.hookApproved ? 'text-green-600' : 'text-red-500'}>
-                                                {approvalStates.token2.hookApproved ? '✓ Approved' : '✗ Not Approved'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div className="text-xs text-blue-600">
-                                    <p>Hook Address: <span className="font-mono">{APPROVAL_ADDRESSES.hook}</span></p>
-                                    <p className="mt-1">Both tokens will be approved for maximum amount (type(uint256).max) to the hook address</p>
-                                </div>
+                                        {/* Token 2 Approval */}
+                                        <div className="p-3 bg-white rounded border">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-700">Token 2</p>
+                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token2}</p>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    {approvalStates.token2.hookApproved ? (
+                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleApproveToken2}
+                                                            disabled={!isConnected || approvalStates.token2.isApproving || isLoading}
+                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {approvalStates.token2.isApproving ? 'Approving...' : 'Approve'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">Hook Address:</span>
+                                                    <span className={approvalStates.token2.hookApproved ? 'text-green-600' : 'text-red-500'}>
+                                                        {approvalStates.token2.hookApproved ? '✓ Approved' : '✗ Not Approved'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-xs text-blue-600">
+                                            <p>Hook Address: <span className="font-mono">{APPROVAL_ADDRESSES.hook}</span></p>
+                                            <p className="mt-1">Both tokens will be approved for maximum amount (type(uint256).max) to the hook address</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -562,10 +688,7 @@ const Features: React.FC = () => {
                         )}
 
                         <div className="text-sm text-gray-600">
-                            <p>Contract: {contracts.reHypothecationHook.address}</p>
-                            <p className="mt-1">
-                                This will call addReHypothecatedLiquidity() with liquidity amount as parameter
-                            </p>
+                            <p>Hook Contract: {contracts.reHypothecationHook.address}</p>
                             <p className="mt-2 text-xs text-gray-500">
                                 Current Network: {chain?.name || 'Unknown'} (ID: {chain?.id || 'N/A'})
                             </p>
