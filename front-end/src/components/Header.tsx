@@ -10,7 +10,12 @@ const Header: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-6">
                     <div className="flex items-center">
-                        <h1 className="text-2xl font-bold text-gray-900">Flashifi</h1>
+                        <img
+                            src="/flashifi_logo.png"
+                            alt="Flashifi Logo"
+                            className="h-8 w-8 mr-3"
+                        />
+                        <h1 className="text-2xl font-bold text-gray-900">FlashiFi</h1>
                         <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             V4 Hook
                         </span>
