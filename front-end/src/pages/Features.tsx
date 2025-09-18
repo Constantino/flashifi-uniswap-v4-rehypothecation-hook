@@ -22,7 +22,7 @@ const Features: React.FC = () => {
     } as const
 
     // FlashiFi shares contract address
-    const FLASHIFI_SHARES_ADDRESS = '0x4e59b44847b379578588920ca78fbf26c0b4956c' as const
+    const FLASHIFI_SHARES_ADDRESS = '0xe35d0a4bf289646d93a18ef6dabf4732304be0c0' as const
 
     // Addresses that need token approval
     const APPROVAL_ADDRESSES = {
