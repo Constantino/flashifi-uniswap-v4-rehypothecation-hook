@@ -7,7 +7,7 @@ import { contracts } from '../config/contracts'
 
 const Features: React.FC = () => {
     const { isConnected, address } = useWallet()
-    const { addReHypothecatedLiquidityWithValue, isPending, isConfirming, isSuccess, error, contractError, chain } = useReHypothecation()
+    const { addReHypothecatedLiquidityWithValue, removeReHypothecatedLiquidity, isPending, isConfirming, isSuccess, error, contractError, chain } = useReHypothecation()
     const { writeContract: writeContractForApproval } = useWriteContract()
     const [liquidityAmount, setLiquidityAmount] = useState('')
     const [needsApproval, setNeedsApproval] = useState(false)
@@ -305,6 +305,29 @@ const Features: React.FC = () => {
         }
     }
 
+    const handleWithdrawLiquidity = async () => {
+        if (!isConnected) {
+            alert('Please connect your wallet first')
+            return
+        }
+
+        // Check if we're on the right network first
+        if (chain?.id !== 84532) {
+            alert('Please switch to Base Sepolia network (Chain ID: 84532) first')
+            return
+        }
+
+        try {
+            await removeReHypothecatedLiquidity()
+        } catch (err) {
+            console.error('Error withdrawing liquidity:', err)
+        }
+    }
+
+    const linkToScan = (address: string) => {
+        return `https://sepolia.basescan.org/address/${address}`
+    }
+
     const handleMintTokens = async () => {
         if (!isConnected) {
             alert('Please connect your wallet first')
@@ -378,9 +401,6 @@ const Features: React.FC = () => {
                     <div className="max-w-4xl mx-auto">
 
                         <div className="mb-6">
-                            <p className="text-sm text-gray-600 mb-4">
-                                Add liquidity to the rehypothecation hook. The liquidity amount is passed as a contract parameter.
-                            </p>
 
                             {/* Mint Tokens Button */}
                             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -429,7 +449,9 @@ const Features: React.FC = () => {
                                             Refresh
                                         </button>
                                         <p className="text-xs text-purple-600 break-all">
-                                            <span className="font-mono">{FLASHIFI_SHARES_ADDRESS.slice(0, 6)}...{FLASHIFI_SHARES_ADDRESS.slice(-4)}</span>
+                                            <a href={linkToScan(FLASHIFI_SHARES_ADDRESS)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{FLASHIFI_SHARES_ADDRESS.slice(0, 6)}...{FLASHIFI_SHARES_ADDRESS.slice(-4)}</span>
+                                            </a>
                                         </p>
                                     </div>
                                 </div>
@@ -455,7 +477,9 @@ const Features: React.FC = () => {
                                             Refresh
                                         </button>
                                         <p className="text-xs text-blue-600 break-all">
-                                            <span className="font-mono">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
+                                            <a href={linkToScan(TOKEN_ADDRESSES.token1)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
+                                            </a>
                                         </p>
                                     </div>
                                 </div>
@@ -481,7 +505,9 @@ const Features: React.FC = () => {
                                             Refresh
                                         </button>
                                         <p className="text-xs text-orange-600 break-all">
-                                            <span className="font-mono">{TOKEN_ADDRESSES.token2.slice(0, 6)}...{TOKEN_ADDRESSES.token2.slice(-4)}</span>
+                                            <a href={linkToScan(TOKEN_ADDRESSES.token2)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token2.slice(0, 6)}...{TOKEN_ADDRESSES.token2.slice(-4)}</span>
+                                            </a>
                                         </p>
                                     </div>
                                 </div>
@@ -642,28 +668,50 @@ const Features: React.FC = () => {
                         )}
 
                         <div className="mb-6">
-                            <button
-                                onClick={handleAddLiquidity}
-                                className={`w-full px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && liquidityAmount &&
-                                    approvalStates.token1.hookApproved && approvalStates.token2.hookApproved
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                    }`}
-                                disabled={
-                                    !isConnected ||
-                                    isLoading ||
-                                    !liquidityAmount ||
-                                    (!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved)
-                                }
-                            >
-                                {isLoading ? (
-                                    isConfirming ? 'Confirming...' : 'Processing...'
-                                ) : (
-                                    !approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved
-                                        ? 'Approve All Tokens First'
-                                        : 'Add Liquidity'
-                                )}
-                            </button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Add Liquidity Button */}
+                                <button
+                                    onClick={handleAddLiquidity}
+                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && liquidityAmount &&
+                                        approvalStates.token1.hookApproved && approvalStates.token2.hookApproved
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                        }`}
+                                    disabled={
+                                        !isConnected ||
+                                        isLoading ||
+                                        !liquidityAmount ||
+                                        (!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved)
+                                    }
+                                >
+                                    {isLoading ? (
+                                        isConfirming ? 'Confirming...' : 'Processing...'
+                                    ) : (
+                                        !approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved
+                                            ? 'Approve All Tokens First'
+                                            : 'Deposit Liquidity'
+                                    )}
+                                </button>
+
+                                {/* Withdraw Liquidity Button */}
+                                <button
+                                    onClick={handleWithdrawLiquidity}
+                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading
+                                        ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                        }`}
+                                    disabled={
+                                        !isConnected ||
+                                        isLoading
+                                    }
+                                >
+                                    {isLoading ? (
+                                        isConfirming ? 'Confirming...' : 'Processing...'
+                                    ) : (
+                                        'Withdraw Liquidity'
+                                    )}
+                                </button>
+                            </div>
 
                             {(!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved) && (
                                 <p className="text-xs text-red-600 mt-2 text-center">
@@ -697,7 +745,9 @@ const Features: React.FC = () => {
                         )}
 
                         <div className="text-sm text-gray-600">
-                            <p>Hook Contract: {contracts.reHypothecationHook.address}</p>
+                            <a href={linkToScan(contracts.reHypothecationHook.address)} target="_blank" rel="noopener noreferrer">
+                                <span className="font-mono underline">Hook Contract: {contracts.reHypothecationHook.address}</span>
+                            </a>
                             <p className="mt-2 text-xs text-gray-500">
                                 Current Network: {chain?.name || 'Unknown'} (ID: {chain?.id || 'N/A'})
                             </p>
