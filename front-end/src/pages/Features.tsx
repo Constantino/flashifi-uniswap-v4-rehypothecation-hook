@@ -696,13 +696,15 @@ const Features: React.FC = () => {
                                 {/* Withdraw Liquidity Button */}
                                 <button
                                     onClick={handleWithdrawLiquidity}
-                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading
+                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && flashifiSharesBalance && Number(flashifiSharesBalance) > 0
                                         ? 'bg-red-600 text-white hover:bg-red-700'
                                         : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                         }`}
                                     disabled={
                                         !isConnected ||
-                                        isLoading
+                                        isLoading ||
+                                        !flashifiSharesBalance ||
+                                        Number(flashifiSharesBalance) === 0
                                     }
                                 >
                                     {isLoading ? (
