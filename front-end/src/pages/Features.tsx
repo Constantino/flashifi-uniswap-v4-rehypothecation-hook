@@ -31,8 +31,8 @@ const Features: React.FC = () => {
 
     // Token addresses for approval
     const TOKEN_ADDRESSES = {
-        token1: '0x8be63ebca9a9c023247e7dd93283f38865664a44',
-        token2: '0xb4beec36c585ac9b4c9c85955be87614c235bfa4'
+        token0: '0x8be63ebca9a9c023247e7dd93283f38865664a44',
+        token1: '0xb4beec36c585ac9b4c9c85955be87614c235bfa4'
     } as const
 
     // FlashiFi shares contract address
@@ -50,19 +50,19 @@ const Features: React.FC = () => {
     } as const
 
     const [approvalStates, setApprovalStates] = useState({
-        token1: {
+        token0: {
             hookApproved: false,
             isApproving: false
         },
-        token2: {
+        token1: {
             hookApproved: false,
             isApproving: false
         }
     })
 
-    // Check approval status for token 1 - Hook address
-    const { data: allowance1Hook, refetch: refetchAllowance1Hook } = useReadContract({
-        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
+    // Check approval status for token 0 - Hook address
+    const { data: allowance0Hook, refetch: refetchAllowance0Hook } = useReadContract({
+        address: TOKEN_ADDRESSES.token0 as `0x${string}`,
         abi: [
             {
                 "constant": true,
@@ -83,9 +83,9 @@ const Features: React.FC = () => {
     })
 
 
-    // Check approval status for token 2 - Hook address
-    const { data: allowance2Hook, refetch: refetchAllowance2Hook } = useReadContract({
-        address: TOKEN_ADDRESSES.token2 as `0x${string}`,
+    // Check approval status for token 1 - Hook address
+    const { data: allowance1Hook, refetch: refetchAllowance1Hook } = useReadContract({
+        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
         abi: [
             {
                 "constant": true,
@@ -126,6 +126,27 @@ const Features: React.FC = () => {
         }
     })
 
+    // Get Token 0 balance
+    const { data: token0Balance, refetch: refetchToken0Balance } = useReadContract({
+        address: TOKEN_ADDRESSES.token0 as `0x${string}`,
+        abi: [
+            {
+                "constant": true,
+                "inputs": [
+                    { "name": "_owner", "type": "address" }
+                ],
+                "name": "balanceOf",
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "type": "function"
+            }
+        ],
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`],
+        query: {
+            enabled: !!address && isConnected
+        }
+    })
+
     // Get Token 1 balance
     const { data: token1Balance, refetch: refetchToken1Balance } = useReadContract({
         address: TOKEN_ADDRESSES.token1 as `0x${string}`,
@@ -147,30 +168,9 @@ const Features: React.FC = () => {
         }
     })
 
-    // Get Token 2 balance
-    const { data: token2Balance, refetch: refetchToken2Balance } = useReadContract({
-        address: TOKEN_ADDRESSES.token2 as `0x${string}`,
-        abi: [
-            {
-                "constant": true,
-                "inputs": [
-                    { "name": "_owner", "type": "address" }
-                ],
-                "name": "balanceOf",
-                "outputs": [{ "name": "", "type": "uint256" }],
-                "type": "function"
-            }
-        ],
-        functionName: 'balanceOf',
-        args: [address as `0x${string}`],
-        query: {
-            enabled: !!address && isConnected
-        }
-    })
-
-    // Get Vault 0 balance (Token 1 balance in Vault 0)
+    // Get Vault 0 balance (Token 0 balance in Vault 0)
     const { data: vault0Balance, refetch: refetchVault0Balance } = useReadContract({
-        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
+        address: TOKEN_ADDRESSES.token0 as `0x${string}`,
         abi: [
             {
                 "constant": true,
@@ -189,9 +189,9 @@ const Features: React.FC = () => {
         }
     })
 
-    // Get Vault 1 balance (Token 2 balance in Vault 1)
+    // Get Vault 1 balance (Token 1 balance in Vault 1)
     const { data: vault1Balance, refetch: refetchVault1Balance } = useReadContract({
-        address: TOKEN_ADDRESSES.token2 as `0x${string}`,
+        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
         abi: [
             {
                 "constant": true,
@@ -213,6 +213,16 @@ const Features: React.FC = () => {
 
     // Update approval states when allowance data changes
     useEffect(() => {
+        if (allowance0Hook !== undefined && allowance0Hook !== null && typeof allowance0Hook === 'bigint') {
+            setApprovalStates(prev => ({
+                ...prev,
+                token0: { ...prev.token0, hookApproved: allowance0Hook > 0n }
+            }))
+        }
+    }, [allowance0Hook])
+
+
+    useEffect(() => {
         if (allowance1Hook !== undefined && allowance1Hook !== null && typeof allowance1Hook === 'bigint') {
             setApprovalStates(prev => ({
                 ...prev,
@@ -220,16 +230,6 @@ const Features: React.FC = () => {
             }))
         }
     }, [allowance1Hook])
-
-
-    useEffect(() => {
-        if (allowance2Hook !== undefined && allowance2Hook !== null && typeof allowance2Hook === 'bigint') {
-            setApprovalStates(prev => ({
-                ...prev,
-                token2: { ...prev.token2, hookApproved: allowance2Hook > 0n }
-            }))
-        }
-    }, [allowance2Hook])
 
 
 
@@ -260,6 +260,37 @@ const Features: React.FC = () => {
         }
     }
 
+    const handleApproveToken0 = async () => {
+        if (!isConnected) {
+            alert('Please connect your wallet first')
+            return
+        }
+
+        try {
+            setApprovalStates(prev => ({
+                ...prev,
+                token0: { ...prev.token0, isApproving: true }
+            }))
+
+
+            // Approve to hook address
+            await approveToken(TOKEN_ADDRESSES.token0, APPROVAL_ADDRESSES.hook, maxUint256)
+
+            // Refetch allowance after approval
+            setTimeout(() => {
+                refetchAllowance0Hook()
+            }, 2000)
+
+        } catch (err) {
+            console.error('Error approving token 0:', err)
+        } finally {
+            setApprovalStates(prev => ({
+                ...prev,
+                token0: { ...prev.token0, isApproving: false }
+            }))
+        }
+    }
+
     const handleApproveToken1 = async () => {
         if (!isConnected) {
             alert('Please connect your wallet first')
@@ -287,37 +318,6 @@ const Features: React.FC = () => {
             setApprovalStates(prev => ({
                 ...prev,
                 token1: { ...prev.token1, isApproving: false }
-            }))
-        }
-    }
-
-    const handleApproveToken2 = async () => {
-        if (!isConnected) {
-            alert('Please connect your wallet first')
-            return
-        }
-
-        try {
-            setApprovalStates(prev => ({
-                ...prev,
-                token2: { ...prev.token2, isApproving: true }
-            }))
-
-
-            // Approve to hook address
-            await approveToken(TOKEN_ADDRESSES.token2, APPROVAL_ADDRESSES.hook, maxUint256)
-
-            // Refetch allowance after approval
-            setTimeout(() => {
-                refetchAllowance2Hook()
-            }, 2000)
-
-        } catch (err) {
-            console.error('Error approving token 2:', err)
-        } finally {
-            setApprovalStates(prev => ({
-                ...prev,
-                token2: { ...prev.token2, isApproving: false }
             }))
         }
     }
@@ -355,7 +355,7 @@ const Features: React.FC = () => {
         }
 
         // Check if both tokens are approved to hook address
-        if (!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved) {
+        if (!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved) {
             alert('Please approve both tokens to the hook address before adding liquidity.')
             return
         }
@@ -405,9 +405,9 @@ const Features: React.FC = () => {
         try {
             setIsMinting(true)
 
-            // Mint Token 1
+            // Mint Token 0
             await writeContractForApproval({
-                address: TOKEN_ADDRESSES.token1 as `0x${string}`,
+                address: TOKEN_ADDRESSES.token0 as `0x${string}`,
                 abi: [
                     {
                         "constant": false,
@@ -424,9 +424,9 @@ const Features: React.FC = () => {
                 args: [address as `0x${string}`, parseEther('1000')],
             })
 
-            // Mint Token 2
+            // Mint Token 1
             await writeContractForApproval({
-                address: TOKEN_ADDRESSES.token2 as `0x${string}`,
+                address: TOKEN_ADDRESSES.token1 as `0x${string}`,
                 abi: [
                     {
                         "constant": false,
@@ -523,13 +523,41 @@ const Features: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Token 1 Balance Section */}
+                                {/* Token 0 Balance Section */}
                                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-blue-800 mb-3">Token 1</h3>
+                                    <h3 className="text-sm font-medium text-blue-800 mb-3">Token 0</h3>
                                     <div className="space-y-2">
                                         <div>
                                             <p className="text-xs text-blue-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-blue-900">
+                                                {token0Balance !== undefined && token0Balance !== null
+                                                    ? (Number(token0Balance) / 1e18).toFixed(10)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchToken0Balance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-blue-600 break-all">
+                                            <a href={linkToScan(TOKEN_ADDRESSES.token0)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token0.slice(0, 6)}...{TOKEN_ADDRESSES.token0.slice(-4)}</span>
+                                            </a>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Token 1 Balance Section */}
+                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-orange-800 mb-3">Token 1</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-orange-600 mb-1">Current Balance</p>
+                                            <p className="text-lg font-semibold text-orange-900">
                                                 {token1Balance !== undefined && token1Balance !== null
                                                     ? (Number(token1Balance) / 1e18).toFixed(10)
                                                     : 'Loading...'
@@ -539,41 +567,13 @@ const Features: React.FC = () => {
                                         <button
                                             onClick={() => refetchToken1Balance()}
                                             disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Refresh
-                                        </button>
-                                        <p className="text-xs text-blue-600 break-all">
-                                            <a href={linkToScan(TOKEN_ADDRESSES.token1)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
-                                            </a>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Token 2 Balance Section */}
-                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-orange-800 mb-3">Token 2</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-orange-600 mb-1">Current Balance</p>
-                                            <p className="text-lg font-semibold text-orange-900">
-                                                {token2Balance !== undefined && token2Balance !== null
-                                                    ? (Number(token2Balance) / 1e18).toFixed(10)
-                                                    : 'Loading...'
-                                                }
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => refetchToken2Balance()}
-                                            disabled={!isConnected}
                                             className="w-full px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Refresh
                                         </button>
                                         <p className="text-xs text-orange-600 break-all">
-                                            <a href={linkToScan(TOKEN_ADDRESSES.token2)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token2.slice(0, 6)}...{TOKEN_ADDRESSES.token2.slice(-4)}</span>
+                                            <a href={linkToScan(TOKEN_ADDRESSES.token1)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
                                             </a>
                                         </p>
                                     </div>
@@ -584,10 +584,10 @@ const Features: React.FC = () => {
                             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Vault 0 Balance Section */}
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-green-800 mb-3">Vault 0 (Token 1)</h3>
+                                    <h3 className="text-sm font-medium text-green-800 mb-3">Vault 0 (Token 0)</h3>
                                     <div className="space-y-2">
                                         <div>
-                                            <p className="text-xs text-green-600 mb-1">Token 1 Balance in Vault</p>
+                                            <p className="text-xs text-green-600 mb-1">Token 0 Balance in Vault</p>
                                             <p className="text-lg font-semibold text-green-900">
                                                 {vault0Balance !== undefined && vault0Balance !== null
                                                     ? (Number(vault0Balance) / 1e18).toFixed(10)
@@ -612,10 +612,10 @@ const Features: React.FC = () => {
 
                                 {/* Vault 1 Balance Section */}
                                 <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-indigo-800 mb-3">Vault 1 (Token 2)</h3>
+                                    <h3 className="text-sm font-medium text-indigo-800 mb-3">Vault 1 (Token 1)</h3>
                                     <div className="space-y-2">
                                         <div>
-                                            <p className="text-xs text-indigo-600 mb-1">Token 2 Balance in Vault</p>
+                                            <p className="text-xs text-indigo-600 mb-1">Token 1 Balance in Vault</p>
                                             <p className="text-lg font-semibold text-indigo-900">
                                                 {vault1Balance !== undefined && vault1Balance !== null
                                                     ? (Number(vault1Balance) / 1e18).toFixed(10)
@@ -667,9 +667,9 @@ const Features: React.FC = () => {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between">
-                                                <span className="text-gray-600">Token1 Delta:</span>
+                                                <span className="text-gray-600">Token0 Delta:</span>
                                                 <span className="font-mono text-blue-700">
-                                                    {parseFloat(liquidityDeltas.token1Delta).toFixed(6)}
+                                                    {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
                                                 </span>
                                             </div>
                                             <div className="flex justify-between col-span-2">
@@ -695,7 +695,7 @@ const Features: React.FC = () => {
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <span className="text-xs text-blue-600">
-                                            {approvalStates.token1.hookApproved && approvalStates.token2.hookApproved
+                                            {approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
                                                 ? 'All Approved'
                                                 : 'Action Required'
                                             }
@@ -721,6 +721,37 @@ const Features: React.FC = () => {
                                         <div className="p-3 bg-white rounded border">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div>
+                                                    <p className="text-sm font-medium text-gray-700">Token 0</p>
+                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token0}</p>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    {approvalStates.token0.hookApproved ? (
+                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleApproveToken0}
+                                                            disabled={!isConnected || approvalStates.token0.isApproving || isLoading}
+                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {approvalStates.token0.isApproving ? 'Approving...' : 'Approve'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">Hook Address:</span>
+                                                    <span className={approvalStates.token0.hookApproved ? 'text-green-600' : 'text-red-500'}>
+                                                        {approvalStates.token0.hookApproved ? '✓ Approved' : '✗ Not Approved'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Token 2 Approval */}
+                                        <div className="p-3 bg-white rounded border">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div>
                                                     <p className="text-sm font-medium text-gray-700">Token 1</p>
                                                     <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token1}</p>
                                                 </div>
@@ -743,37 +774,6 @@ const Features: React.FC = () => {
                                                     <span className="text-gray-500">Hook Address:</span>
                                                     <span className={approvalStates.token1.hookApproved ? 'text-green-600' : 'text-red-500'}>
                                                         {approvalStates.token1.hookApproved ? '✓ Approved' : '✗ Not Approved'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Token 2 Approval */}
-                                        <div className="p-3 bg-white rounded border">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Token 2</p>
-                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token2}</p>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    {approvalStates.token2.hookApproved ? (
-                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={handleApproveToken2}
-                                                            disabled={!isConnected || approvalStates.token2.isApproving || isLoading}
-                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {approvalStates.token2.isApproving ? 'Approving...' : 'Approve'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-500">Hook Address:</span>
-                                                    <span className={approvalStates.token2.hookApproved ? 'text-green-600' : 'text-red-500'}>
-                                                        {approvalStates.token2.hookApproved ? '✓ Approved' : '✗ Not Approved'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -826,7 +826,7 @@ const Features: React.FC = () => {
                                 <button
                                     onClick={handleAddLiquidity}
                                     className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && liquidityAmount &&
-                                        approvalStates.token1.hookApproved && approvalStates.token2.hookApproved
+                                        approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
                                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                                         : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                         }`}
@@ -834,13 +834,13 @@ const Features: React.FC = () => {
                                         !isConnected ||
                                         isLoading ||
                                         !liquidityAmount ||
-                                        (!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved)
+                                        (!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved)
                                     }
                                 >
                                     {isLoading ? (
                                         isConfirming ? 'Confirming...' : 'Processing...'
                                     ) : (
-                                        !approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved
+                                        !approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved
                                             ? 'Approve All Tokens First'
                                             : 'Deposit Liquidity'
                                     )}
@@ -868,7 +868,7 @@ const Features: React.FC = () => {
                                 </button>
                             </div>
 
-                            {(!approvalStates.token1.hookApproved || !approvalStates.token2.hookApproved) && (
+                            {(!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved) && (
                                 <p className="text-xs text-red-600 mt-2 text-center">
                                     Both tokens must be approved to the hook address before adding liquidity
                                 </p>

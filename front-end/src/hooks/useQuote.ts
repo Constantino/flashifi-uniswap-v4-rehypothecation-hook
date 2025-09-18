@@ -99,7 +99,7 @@ export function useQuote() {
     // Calculate price from sqrtPriceX96
     const calculatePrice = (sqrtPriceX96: bigint) => {
         // Price = (sqrtPriceX96 / 2^96)^2
-        // For token1 in terms of token0
+        // For token0 in terms of token1
         const Q96 = BigInt(2) ** BigInt(96)
         const price = (sqrtPriceX96 * sqrtPriceX96) / (Q96 * Q96)
         return price
