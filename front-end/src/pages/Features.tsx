@@ -710,7 +710,7 @@ const Features: React.FC = () => {
                                                     <div className="flex justify-between col-span-2">
                                                         <span className="text-gray-600">Current Price:</span>
                                                         <span className="font-mono text-blue-700">
-                                                            {parseFloat(liquidityDeltas.price).toFixed(6)} Token1/Token0
+                                                            {parseFloat(liquidityDeltas.price).toFixed(18)} Token1/Token0
                                                         </span>
                                                     </div>
                                                 </div>
