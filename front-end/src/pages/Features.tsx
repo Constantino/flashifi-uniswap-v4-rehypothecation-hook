@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useWallet } from '../hooks/useWallet'
 import { useReHypothecation } from '../hooks/useReHypothecation'
+import { usePoolManagerQuote } from '../hooks/usePoolManagerQuote'
 import { parseEther, maxUint256 } from 'viem'
 import { useWriteContract, useReadContract } from 'wagmi'
 import { contracts } from '../config/contracts'
@@ -9,12 +10,24 @@ import PoolManagerQuoteDisplay from '../components/PoolManagerQuoteDisplay'
 const Features: React.FC = () => {
     const { isConnected, address } = useWallet()
     const { addReHypothecatedLiquidityWithValue, removeReHypothecatedLiquidity, isPending, isConfirming, isSuccess, error, contractError, chain } = useReHypothecation()
+    const { calculateLiquidityDeltas, poolInitialized } = usePoolManagerQuote()
     const { writeContract: writeContractForApproval } = useWriteContract()
     const [liquidityAmount, setLiquidityAmount] = useState('')
     const [needsApproval, setNeedsApproval] = useState(false)
     const [tokenAddress, setTokenAddress] = useState('')
     const [isMinting, setIsMinting] = useState(false)
     const [isApprovalsExpanded, setIsApprovalsExpanded] = useState(false)
+    const [liquidityDeltas, setLiquidityDeltas] = useState<any>(null)
+
+    // Calculate deltas when liquidity amount changes
+    useEffect(() => {
+        if (poolInitialized && liquidityAmount && liquidityAmount !== '0') {
+            const deltas = calculateLiquidityDeltas(liquidityAmount)
+            setLiquidityDeltas(deltas)
+        } else {
+            setLiquidityDeltas(null)
+        }
+    }, [liquidityAmount, poolInitialized, calculateLiquidityDeltas])
 
     // Token addresses for approval
     const TOKEN_ADDRESSES = {
@@ -641,6 +654,33 @@ const Features: React.FC = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     disabled={isLoading}
                                 />
+
+                                {/* Delta Information Display */}
+                                {liquidityDeltas && (
+                                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <div className="text-sm font-medium text-blue-800 mb-2">Expected Token Deltas:</div>
+                                        <div className="grid grid-cols-2 gap-4 text-xs">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Token0 Delta:</span>
+                                                <span className="font-mono text-blue-700">
+                                                    {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Token1 Delta:</span>
+                                                <span className="font-mono text-blue-700">
+                                                    {parseFloat(liquidityDeltas.token1Delta).toFixed(6)}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between col-span-2">
+                                                <span className="text-gray-600">Current Price:</span>
+                                                <span className="font-mono text-blue-700">
+                                                    {parseFloat(liquidityDeltas.price).toFixed(6)} Token1/Token0
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Token Approval Section - Dropdown */}

@@ -180,6 +180,49 @@ export function usePoolManagerQuote() {
         }
     }
 
+    // Calculate deltas for liquidity operations
+    const calculateLiquidityDeltas = (liquidityAmount: string, tickLower: number = -887220, tickUpper: number = 887220) => {
+        if (!slot0Data || !liquidityAmount || liquidityAmount === '0') {
+            return null
+        }
+
+        const [sqrtPriceX96, currentTick] = slot0Data
+        if (!sqrtPriceX96) return null
+
+        const liquidityDelta = parseEther(liquidityAmount)
+        const currentPrice = calculatePrice(sqrtPriceX96)
+
+        // Calculate the amount of token0 and token1 needed for the given liquidity
+        // This is a simplified calculation - in practice, you'd need to consider the tick range
+        // and use the proper Uniswap V4 liquidity math
+
+        // For a full-range position (tickLower = -887220, tickUpper = 887220)
+        // The liquidity represents the square root of the product of token amounts
+        // L = sqrt(x * y) where x is token0 amount and y is token1 amount
+
+        // At current price: y = x * price
+        // So: L = sqrt(x * x * price) = x * sqrt(price)
+        // Therefore: x = L / sqrt(price), y = L * sqrt(price)
+
+        const Q96 = BigInt(2) ** BigInt(96)
+        const sqrtPrice = sqrtPriceX96
+
+        // Calculate token amounts based on current price
+        // This is a simplified calculation for demonstration
+        const token0Amount = (liquidityDelta * Q96) / sqrtPrice
+        const token1Amount = (liquidityDelta * sqrtPrice) / Q96
+
+        return {
+            liquidityDelta: formatEther(liquidityDelta),
+            token0Delta: formatEther(token0Amount),
+            token1Delta: formatEther(token1Amount),
+            currentTick,
+            tickLower,
+            tickUpper,
+            price: formatEther(currentPrice)
+        }
+    }
+
     const getQuote = async (token0Amount: string, token1Amount: string) => {
         if (!slot0Data) {
             console.error('Pool data not available')
@@ -228,6 +271,7 @@ export function usePoolManagerQuote() {
         isLoadingSlot0,
         poolInitialized,
         calculateQuote,
+        calculateLiquidityDeltas,
         getQuote,
         refetchSlot0
     }
