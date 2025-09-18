@@ -127,9 +127,33 @@ export function useReHypothecation() {
         }
     }
 
+    const removeReHypothecatedLiquidity = async () => {
+        try {
+            if (!address) {
+                throw new Error('No wallet address available')
+            }
+
+            console.log('Attempting to remove rehypothecated liquidity:', {
+                owner: address,
+                contractAddress: contracts.reHypothecationHook.address
+            })
+
+            writeContract({
+                address: contracts.reHypothecationHook.address,
+                abi: contracts.reHypothecationHook.abi,
+                functionName: 'removeReHypothecatedLiquidity',
+                args: [address],
+            })
+        } catch (err) {
+            console.error('Error in removeReHypothecatedLiquidity:', err)
+            throw err
+        }
+    }
+
     return {
         setVaults,
         addReHypothecatedLiquidityWithValue,
+        removeReHypothecatedLiquidity,
         hash,
         isPending,
         isConfirming,
