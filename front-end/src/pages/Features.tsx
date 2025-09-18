@@ -18,6 +18,7 @@ const Features: React.FC = () => {
     const [isMinting, setIsMinting] = useState(false)
     const [isApprovalsExpanded, setIsApprovalsExpanded] = useState(false)
     const [liquidityDeltas, setLiquidityDeltas] = useState<any>(null)
+    const [activeTab, setActiveTab] = useState('tab1')
 
     // Calculate deltas when liquidity amount changes
     useEffect(() => {
@@ -460,465 +461,517 @@ const Features: React.FC = () => {
                         FlashiFi Re-Hypothecation
                     </h1>
 
+                    {/* Tab Navigation */}
+                    <div className="max-w-4xl mx-auto mb-8">
+                        <div className="border-b border-gray-200">
+                            <nav className="-mb-px flex space-x-8 justify-center">
+                                <button
+                                    onClick={() => setActiveTab('tab1')}
+                                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'tab1'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    Liquidity Management
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('tab2')}
+                                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'tab2'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    Quoter
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('tab3')}
+                                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'tab3'
+                                        ? 'border-blue-500 text-blue-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    Swap
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
                     <div className="max-w-4xl mx-auto">
+                        {/* Tab Content */}
+                        {activeTab === 'tab1' && (
+                            <div>
 
-                        {/* Pool Manager Quote Display Component */}
-                        <div className="mb-8">
-                            <PoolManagerQuoteDisplay />
-                        </div>
 
-                        <div className="mb-6">
+                                <div className="mb-6">
 
-                            {/* Mint Tokens Button */}
-                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <h3 className="text-sm font-medium text-green-800 mb-3">Get Test Tokens</h3>
-                                <p className="text-xs text-green-600 mb-4">
-                                    Mint 1000 units of both test tokens to your connected address for testing purposes.
-                                </p>
-                                <button
-                                    onClick={handleMintTokens}
-                                    disabled={!isConnected || isMinting}
-                                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {isMinting ? 'Minting Tokens...' : 'Mint 1000 units of both test tokens'}
-                                </button>
-                            </div>
-
-                            {/* Token Balances - Horizontal Layout */}
-                            <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* FlashiFi Shares Balance Section */}
-                                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-purple-800 mb-3">FlashiFi Shares</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-purple-600 mb-1">Current Balance</p>
-                                            <p className="text-lg font-semibold text-purple-900">
-                                                {(() => {
-                                                    console.log('Flashifi Shares Debug:', {
-                                                        isLoading: isLoadingFlashifiShares,
-                                                        balance: flashifiSharesBalance,
-                                                        address: address,
-                                                        isConnected: isConnected
-                                                    });
-                                                    return isLoadingFlashifiShares
-                                                        ? 'Loading...'
-                                                        : flashifiSharesBalance !== undefined && flashifiSharesBalance !== null
-                                                            ? (Number(flashifiSharesBalance) / 1e18).toFixed(10)
-                                                            : '0.0000000000';
-                                                })()}
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => refetchFlashifiSharesBalance()}
-                                            disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Refresh
-                                        </button>
-                                        <p className="text-xs text-purple-600 break-all">
-                                            <a href={linkToScan(FLASHIFI_SHARES_ADDRESS)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{FLASHIFI_SHARES_ADDRESS.slice(0, 6)}...{FLASHIFI_SHARES_ADDRESS.slice(-4)}</span>
-                                            </a>
+                                    {/* Mint Tokens Button */}
+                                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                        <h3 className="text-sm font-medium text-green-800 mb-3">Get Test Tokens</h3>
+                                        <p className="text-xs text-green-600 mb-4">
+                                            Mint 1000 units of both test tokens to your connected address for testing purposes.
                                         </p>
-                                    </div>
-                                </div>
-
-                                {/* Token 0 Balance Section */}
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-blue-800 mb-3">Token 0</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-blue-600 mb-1">Current Balance</p>
-                                            <p className="text-lg font-semibold text-blue-900">
-                                                {token0Balance !== undefined && token0Balance !== null
-                                                    ? (Number(token0Balance) / 1e18).toFixed(10)
-                                                    : 'Loading...'
-                                                }
-                                            </p>
-                                        </div>
                                         <button
-                                            onClick={() => refetchToken0Balance()}
-                                            disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            onClick={handleMintTokens}
+                                            disabled={!isConnected || isMinting}
+                                            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            Refresh
+                                            {isMinting ? 'Minting Tokens...' : 'Mint 1000 units of both test tokens'}
                                         </button>
-                                        <p className="text-xs text-blue-600 break-all">
-                                            <a href={linkToScan(TOKEN_ADDRESSES.token0)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token0.slice(0, 6)}...{TOKEN_ADDRESSES.token0.slice(-4)}</span>
-                                            </a>
-                                        </p>
                                     </div>
-                                </div>
 
-                                {/* Token 1 Balance Section */}
-                                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-orange-800 mb-3">Token 1</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-orange-600 mb-1">Current Balance</p>
-                                            <p className="text-lg font-semibold text-orange-900">
-                                                {token1Balance !== undefined && token1Balance !== null
-                                                    ? (Number(token1Balance) / 1e18).toFixed(10)
-                                                    : 'Loading...'
-                                                }
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => refetchToken1Balance()}
-                                            disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Refresh
-                                        </button>
-                                        <p className="text-xs text-orange-600 break-all">
-                                            <a href={linkToScan(TOKEN_ADDRESSES.token1)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
-                                            </a>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Vault Balances - Horizontal Layout */}
-                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Vault 0 Balance Section */}
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-green-800 mb-3">Vault 0 (Token 0)</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-green-600 mb-1">Token 0 Balance in Vault</p>
-                                            <p className="text-lg font-semibold text-green-900">
-                                                {vault0Balance !== undefined && vault0Balance !== null
-                                                    ? (Number(vault0Balance) / 1e18).toFixed(10)
-                                                    : 'Loading...'
-                                                }
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => refetchVault0Balance()}
-                                            disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Refresh
-                                        </button>
-                                        <p className="text-xs text-green-600 break-all">
-                                            <a href={linkToScan(VAULT_ADDRESSES.vault0)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{VAULT_ADDRESSES.vault0.slice(0, 6)}...{VAULT_ADDRESSES.vault0.slice(-4)}</span>
-                                            </a>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Vault 1 Balance Section */}
-                                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                                    <h3 className="text-sm font-medium text-indigo-800 mb-3">Vault 1 (Token 1)</h3>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <p className="text-xs text-indigo-600 mb-1">Token 1 Balance in Vault</p>
-                                            <p className="text-lg font-semibold text-indigo-900">
-                                                {vault1Balance !== undefined && vault1Balance !== null
-                                                    ? (Number(vault1Balance) / 1e18).toFixed(10)
-                                                    : 'Loading...'
-                                                }
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => refetchVault1Balance()}
-                                            disabled={!isConnected}
-                                            className="w-full px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Refresh
-                                        </button>
-                                        <p className="text-xs text-indigo-600 break-all">
-                                            <a href={linkToScan(VAULT_ADDRESSES.vault1)} target="_blank" rel="noopener noreferrer">
-                                                <span className="font-mono underline">{VAULT_ADDRESSES.vault1.slice(0, 6)}...{VAULT_ADDRESSES.vault1.slice(-4)}</span>
-                                            </a>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="liquidityAmount" className="block text-2xl font-semibold text-gray-800 mb-4">
-                                    Liquidity Amount to deposit (in units of FlashiFi Shares)
-                                </label>
-                                <input
-                                    id="liquidityAmount"
-                                    type="number"
-                                    step="0.001"
-                                    min="0"
-                                    value={liquidityAmount}
-                                    onChange={(e) => setLiquidityAmount(e.target.value)}
-                                    placeholder="0.001"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    disabled={isLoading}
-                                />
-
-                                {/* Delta Information Display */}
-                                {liquidityDeltas && (
-                                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                        <div className="text-sm font-medium text-blue-800 mb-2">Expected Token Deltas:</div>
-                                        <div className="grid grid-cols-2 gap-4 text-xs">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Token0 Delta:</span>
-                                                <span className="font-mono text-blue-700">
-                                                    {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Token0 Delta:</span>
-                                                <span className="font-mono text-blue-700">
-                                                    {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between col-span-2">
-                                                <span className="text-gray-600">Current Price:</span>
-                                                <span className="font-mono text-blue-700">
-                                                    {parseFloat(liquidityDeltas.price).toFixed(6)} Token1/Token0
-                                                </span>
+                                    {/* Token Balances - Horizontal Layout */}
+                                    <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {/* FlashiFi Shares Balance Section */}
+                                        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                            <h3 className="text-sm font-medium text-purple-800 mb-3">FlashiFi Shares</h3>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-purple-600 mb-1">Current Balance</p>
+                                                    <p className="text-lg font-semibold text-purple-900">
+                                                        {(() => {
+                                                            console.log('Flashifi Shares Debug:', {
+                                                                isLoading: isLoadingFlashifiShares,
+                                                                balance: flashifiSharesBalance,
+                                                                address: address,
+                                                                isConnected: isConnected
+                                                            });
+                                                            return isLoadingFlashifiShares
+                                                                ? 'Loading...'
+                                                                : flashifiSharesBalance !== undefined && flashifiSharesBalance !== null
+                                                                    ? (Number(flashifiSharesBalance) / 1e18).toFixed(10)
+                                                                    : '0.0000000000';
+                                                        })()}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => refetchFlashifiSharesBalance()}
+                                                    disabled={!isConnected}
+                                                    className="w-full px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Refresh
+                                                </button>
+                                                <p className="text-xs text-purple-600 break-all">
+                                                    <a href={linkToScan(FLASHIFI_SHARES_ADDRESS)} target="_blank" rel="noopener noreferrer">
+                                                        <span className="font-mono underline">{FLASHIFI_SHARES_ADDRESS.slice(0, 6)}...{FLASHIFI_SHARES_ADDRESS.slice(-4)}</span>
+                                                    </a>
+                                                </p>
                                             </div>
                                         </div>
+
+                                        {/* Token 0 Balance Section */}
+                                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <h3 className="text-sm font-medium text-blue-800 mb-3">Token 0</h3>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-blue-600 mb-1">Current Balance</p>
+                                                    <p className="text-lg font-semibold text-blue-900">
+                                                        {token0Balance !== undefined && token0Balance !== null
+                                                            ? (Number(token0Balance) / 1e18).toFixed(10)
+                                                            : 'Loading...'
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => refetchToken0Balance()}
+                                                    disabled={!isConnected}
+                                                    className="w-full px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Refresh
+                                                </button>
+                                                <p className="text-xs text-blue-600 break-all">
+                                                    <a href={linkToScan(TOKEN_ADDRESSES.token0)} target="_blank" rel="noopener noreferrer">
+                                                        <span className="font-mono underline">{TOKEN_ADDRESSES.token0.slice(0, 6)}...{TOKEN_ADDRESSES.token0.slice(-4)}</span>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Token 1 Balance Section */}
+                                        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                            <h3 className="text-sm font-medium text-orange-800 mb-3">Token 1</h3>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-orange-600 mb-1">Current Balance</p>
+                                                    <p className="text-lg font-semibold text-orange-900">
+                                                        {token1Balance !== undefined && token1Balance !== null
+                                                            ? (Number(token1Balance) / 1e18).toFixed(10)
+                                                            : 'Loading...'
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => refetchToken1Balance()}
+                                                    disabled={!isConnected}
+                                                    className="w-full px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Refresh
+                                                </button>
+                                                <p className="text-xs text-orange-600 break-all">
+                                                    <a href={linkToScan(TOKEN_ADDRESSES.token1)} target="_blank" rel="noopener noreferrer">
+                                                        <span className="font-mono underline">{TOKEN_ADDRESSES.token1.slice(0, 6)}...{TOKEN_ADDRESSES.token1.slice(-4)}</span>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Vault Balances - Horizontal Layout */}
+                                    <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Vault 0 Balance Section */}
+                                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                            <h3 className="text-sm font-medium text-green-800 mb-3">Vault 0 (Token 0)</h3>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-green-600 mb-1">Token 0 Balance in Vault</p>
+                                                    <p className="text-lg font-semibold text-green-900">
+                                                        {vault0Balance !== undefined && vault0Balance !== null
+                                                            ? (Number(vault0Balance) / 1e18).toFixed(10)
+                                                            : 'Loading...'
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => refetchVault0Balance()}
+                                                    disabled={!isConnected}
+                                                    className="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Refresh
+                                                </button>
+                                                <p className="text-xs text-green-600 break-all">
+                                                    <a href={linkToScan(VAULT_ADDRESSES.vault0)} target="_blank" rel="noopener noreferrer">
+                                                        <span className="font-mono underline">{VAULT_ADDRESSES.vault0.slice(0, 6)}...{VAULT_ADDRESSES.vault0.slice(-4)}</span>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Vault 1 Balance Section */}
+                                        <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                            <h3 className="text-sm font-medium text-indigo-800 mb-3">Vault 1 (Token 1)</h3>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <p className="text-xs text-indigo-600 mb-1">Token 1 Balance in Vault</p>
+                                                    <p className="text-lg font-semibold text-indigo-900">
+                                                        {vault1Balance !== undefined && vault1Balance !== null
+                                                            ? (Number(vault1Balance) / 1e18).toFixed(10)
+                                                            : 'Loading...'
+                                                        }
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => refetchVault1Balance()}
+                                                    disabled={!isConnected}
+                                                    className="w-full px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Refresh
+                                                </button>
+                                                <p className="text-xs text-indigo-600 break-all">
+                                                    <a href={linkToScan(VAULT_ADDRESSES.vault1)} target="_blank" rel="noopener noreferrer">
+                                                        <span className="font-mono underline">{VAULT_ADDRESSES.vault1.slice(0, 6)}...{VAULT_ADDRESSES.vault1.slice(-4)}</span>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label htmlFor="liquidityAmount" className="block text-2xl font-semibold text-gray-800 mb-4">
+                                            Liquidity Amount to deposit (in units of FlashiFi Shares)
+                                        </label>
+                                        <input
+                                            id="liquidityAmount"
+                                            type="number"
+                                            step="0.001"
+                                            min="0"
+                                            value={liquidityAmount}
+                                            onChange={(e) => setLiquidityAmount(e.target.value)}
+                                            placeholder="0.001"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            disabled={isLoading}
+                                        />
+
+                                        {/* Delta Information Display */}
+                                        {liquidityDeltas && (
+                                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <div className="text-sm font-medium text-blue-800 mb-2">Expected Token Deltas:</div>
+                                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">Token0 Delta:</span>
+                                                        <span className="font-mono text-blue-700">
+                                                            {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-600">Token0 Delta:</span>
+                                                        <span className="font-mono text-blue-700">
+                                                            {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between col-span-2">
+                                                        <span className="text-gray-600">Current Price:</span>
+                                                        <span className="font-mono text-blue-700">
+                                                            {parseFloat(liquidityDeltas.price).toFixed(6)} Token1/Token0
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Token Approval Section - Dropdown */}
+                                    <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <button
+                                            onClick={() => setIsApprovalsExpanded(!isApprovalsExpanded)}
+                                            className="w-full p-4 text-left flex items-center justify-between hover:bg-blue-100 transition-colors"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <h3 className="text-sm font-medium text-blue-800">Token Approvals Required</h3>
+                                                <span className="text-green-600 text-sm">✓</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <span className="text-xs text-blue-600">
+                                                    {approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
+                                                        ? 'All Approved'
+                                                        : 'Action Required'
+                                                    }
+                                                </span>
+                                                <svg
+                                                    className={`w-4 h-4 text-blue-600 transition-transform ${isApprovalsExpanded ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        </button>
+
+                                        {isApprovalsExpanded && (
+                                            <div className="px-4 pb-4 space-y-4">
+                                                <p className="text-xs text-blue-600">
+                                                    Before adding liquidity, you need to approve both tokens for the hook to spend them.
+                                                </p>
+
+                                                {/* Token 1 Approval */}
+                                                <div className="p-3 bg-white rounded border">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-700">Token 0</p>
+                                                            <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token0}</p>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            {approvalStates.token0.hookApproved ? (
+                                                                <span className="text-green-600 text-sm font-medium">✓ Approved</span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={handleApproveToken0}
+                                                                    disabled={!isConnected || approvalStates.token0.isApproving || isLoading}
+                                                                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                >
+                                                                    {approvalStates.token0.isApproving ? 'Approving...' : 'Approve'}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between text-xs">
+                                                            <span className="text-gray-500">Hook Address:</span>
+                                                            <span className={approvalStates.token0.hookApproved ? 'text-green-600' : 'text-red-500'}>
+                                                                {approvalStates.token0.hookApproved ? '✓ Approved' : '✗ Not Approved'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Token 2 Approval */}
+                                                <div className="p-3 bg-white rounded border">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-700">Token 1</p>
+                                                            <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token1}</p>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            {approvalStates.token1.hookApproved ? (
+                                                                <span className="text-green-600 text-sm font-medium">✓ Approved</span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={handleApproveToken1}
+                                                                    disabled={!isConnected || approvalStates.token1.isApproving || isLoading}
+                                                                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                >
+                                                                    {approvalStates.token1.isApproving ? 'Approving...' : 'Approve'}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <div className="flex justify-between text-xs">
+                                                            <span className="text-gray-500">Hook Address:</span>
+                                                            <span className={approvalStates.token1.hookApproved ? 'text-green-600' : 'text-red-500'}>
+                                                                {approvalStates.token1.hookApproved ? '✓ Approved' : '✗ Not Approved'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-xs text-blue-600">
+                                                    <p>Hook Address: <span className="font-mono">{APPROVAL_ADDRESSES.hook}</span></p>
+                                                    <p className="mt-1">Both tokens will be approved for maximum amount (type(uint256).max) to the hook address</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+
+
+                                {needsApproval && (
+                                    <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                                        <h3 className="text-sm font-medium text-orange-800 mb-3">Token Approval Required</h3>
+                                        <div className="mb-3">
+                                            <label htmlFor="tokenAddress" className="block text-sm font-medium text-orange-700 mb-2">
+                                                Token Address (ERC20)
+                                            </label>
+                                            <input
+                                                id="tokenAddress"
+                                                type="text"
+                                                value={tokenAddress}
+                                                onChange={(e) => setTokenAddress(e.target.value)}
+                                                placeholder="0x..."
+                                                className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                                disabled={isLoading}
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={handleApprove}
+                                            className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                                            disabled={!tokenAddress || isLoading}
+                                        >
+                                            Approve Token
+                                        </button>
+                                        <p className="text-xs text-orange-600 mt-2">
+                                            The contract needs permission to spend your tokens. Enter the token address and click approve.
+                                        </p>
                                     </div>
                                 )}
-                            </div>
 
-                            {/* Token Approval Section - Dropdown */}
-                            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg">
-                                <button
-                                    onClick={() => setIsApprovalsExpanded(!isApprovalsExpanded)}
-                                    className="w-full p-4 text-left flex items-center justify-between hover:bg-blue-100 transition-colors"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <h3 className="text-sm font-medium text-blue-800">Token Approvals Required</h3>
-                                        <span className="text-green-600 text-sm">✓</span>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-xs text-blue-600">
-                                            {approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
-                                                ? 'All Approved'
-                                                : 'Action Required'
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Add Liquidity Button */}
+                                        <button
+                                            onClick={handleAddLiquidity}
+                                            className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && liquidityAmount &&
+                                                approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                                }`}
+                                            disabled={
+                                                !isConnected ||
+                                                isLoading ||
+                                                !liquidityAmount ||
+                                                (!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved)
                                             }
-                                        </span>
-                                        <svg
-                                            className={`w-4 h-4 text-blue-600 transition-transform ${isApprovalsExpanded ? 'rotate-180' : ''}`}
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
                                         >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                            {isLoading ? (
+                                                isConfirming ? 'Confirming...' : 'Processing...'
+                                            ) : (
+                                                !approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved
+                                                    ? 'Approve All Tokens First'
+                                                    : 'Deposit Liquidity'
+                                            )}
+                                        </button>
+
+                                        {/* Withdraw Liquidity Button */}
+                                        <button
+                                            onClick={handleWithdrawLiquidity}
+                                            className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && flashifiSharesBalance && Number(flashifiSharesBalance) > 0
+                                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                                : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                                }`}
+                                            disabled={
+                                                !isConnected ||
+                                                isLoading ||
+                                                !flashifiSharesBalance ||
+                                                Number(flashifiSharesBalance) === 0
+                                            }
+                                        >
+                                            {isLoading ? (
+                                                isConfirming ? 'Confirming...' : 'Processing...'
+                                            ) : (
+                                                'Withdraw Liquidity'
+                                            )}
+                                        </button>
                                     </div>
-                                </button>
 
-                                {isApprovalsExpanded && (
-                                    <div className="px-4 pb-4 space-y-4">
-                                        <p className="text-xs text-blue-600">
-                                            Before adding liquidity, you need to approve both tokens for the hook to spend them.
+                                    {(!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved) && (
+                                        <p className="text-xs text-red-600 mt-2 text-center">
+                                            Both tokens must be approved to the hook address before adding liquidity
                                         </p>
+                                    )}
+                                </div>
 
-                                        {/* Token 1 Approval */}
-                                        <div className="p-3 bg-white rounded border">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Token 0</p>
-                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token0}</p>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    {approvalStates.token0.hookApproved ? (
-                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={handleApproveToken0}
-                                                            disabled={!isConnected || approvalStates.token0.isApproving || isLoading}
-                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {approvalStates.token0.isApproving ? 'Approving...' : 'Approve'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-500">Hook Address:</span>
-                                                    <span className={approvalStates.token0.hookApproved ? 'text-green-600' : 'text-red-500'}>
-                                                        {approvalStates.token0.hookApproved ? '✓ Approved' : '✗ Not Approved'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Token 2 Approval */}
-                                        <div className="p-3 bg-white rounded border">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-700">Token 1</p>
-                                                    <p className="text-xs text-gray-500 font-mono">{TOKEN_ADDRESSES.token1}</p>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    {approvalStates.token1.hookApproved ? (
-                                                        <span className="text-green-600 text-sm font-medium">✓ Approved</span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={handleApproveToken1}
-                                                            disabled={!isConnected || approvalStates.token1.isApproving || isLoading}
-                                                            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {approvalStates.token1.isApproving ? 'Approving...' : 'Approve'}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <div className="flex justify-between text-xs">
-                                                    <span className="text-gray-500">Hook Address:</span>
-                                                    <span className={approvalStates.token1.hookApproved ? 'text-green-600' : 'text-red-500'}>
-                                                        {approvalStates.token1.hookApproved ? '✓ Approved' : '✗ Not Approved'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-xs text-blue-600">
-                                            <p>Hook Address: <span className="font-mono">{APPROVAL_ADDRESSES.hook}</span></p>
-                                            <p className="mt-1">Both tokens will be approved for maximum amount (type(uint256).max) to the hook address</p>
-                                        </div>
+                                {error && (
+                                    <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                                        <p className="font-medium">Transaction Failed</p>
+                                        <p className="text-sm">{error.message}</p>
                                     </div>
                                 )}
-                            </div>
-                        </div>
 
+                                {contractError && (
+                                    <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
+                                        <p className="font-medium">Contract Issue</p>
+                                        <p className="text-sm">Contract not found or not accessible on {chain?.name || 'current network'}</p>
+                                        <p className="text-xs mt-1">Please verify the contract address and network</p>
+                                    </div>
+                                )}
 
+                                {isSuccess && (
+                                    <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                                        <p className="font-medium">Success!</p>
+                                        <p className="text-sm">
+                                            Liquidity added successfully!
+                                        </p>
+                                    </div>
+                                )}
 
-                        {needsApproval && (
-                            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                                <h3 className="text-sm font-medium text-orange-800 mb-3">Token Approval Required</h3>
-                                <div className="mb-3">
-                                    <label htmlFor="tokenAddress" className="block text-sm font-medium text-orange-700 mb-2">
-                                        Token Address (ERC20)
-                                    </label>
-                                    <input
-                                        id="tokenAddress"
-                                        type="text"
-                                        value={tokenAddress}
-                                        onChange={(e) => setTokenAddress(e.target.value)}
-                                        placeholder="0x..."
-                                        className="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                        disabled={isLoading}
-                                    />
+                                <div className="text-sm text-gray-600">
+                                    <a href={linkToScan(contracts.reHypothecationHook.address)} target="_blank" rel="noopener noreferrer">
+                                        <span className="font-mono underline">Hook Contract: {contracts.reHypothecationHook.address}</span>
+                                    </a>
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        Current Network: {chain?.name || 'Unknown'} (ID: {chain?.id || 'N/A'})
+                                    </p>
+                                    <p className="mt-1 text-xs text-blue-500">
+                                        Required Network: Base Sepolia (ID: 84532)
+                                    </p>
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Debug: Check browser console for detailed transaction logs
+                                    </p>
+                                    {chain?.id !== 84532 && (
+                                        <p className="mt-1 text-xs text-red-500">
+                                            ⚠️ Please switch to Base Sepolia network to interact with this contract
+                                        </p>
+                                    )}
+
                                 </div>
-                                <button
-                                    onClick={handleApprove}
-                                    className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
-                                    disabled={!tokenAddress || isLoading}
-                                >
-                                    Approve Token
-                                </button>
-                                <p className="text-xs text-orange-600 mt-2">
-                                    The contract needs permission to spend your tokens. Enter the token address and click approve.
-                                </p>
                             </div>
                         )}
 
-                        <div className="mb-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Add Liquidity Button */}
-                                <button
-                                    onClick={handleAddLiquidity}
-                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && liquidityAmount &&
-                                        approvalStates.token0.hookApproved && approvalStates.token1.hookApproved
-                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                        }`}
-                                    disabled={
-                                        !isConnected ||
-                                        isLoading ||
-                                        !liquidityAmount ||
-                                        (!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved)
-                                    }
-                                >
-                                    {isLoading ? (
-                                        isConfirming ? 'Confirming...' : 'Processing...'
-                                    ) : (
-                                        !approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved
-                                            ? 'Approve All Tokens First'
-                                            : 'Deposit Liquidity'
-                                    )}
-                                </button>
-
-                                {/* Withdraw Liquidity Button */}
-                                <button
-                                    onClick={handleWithdrawLiquidity}
-                                    className={`px-8 py-4 text-lg font-semibold rounded-lg transition-colors ${isConnected && !isLoading && flashifiSharesBalance && Number(flashifiSharesBalance) > 0
-                                        ? 'bg-red-600 text-white hover:bg-red-700'
-                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                        }`}
-                                    disabled={
-                                        !isConnected ||
-                                        isLoading ||
-                                        !flashifiSharesBalance ||
-                                        Number(flashifiSharesBalance) === 0
-                                    }
-                                >
-                                    {isLoading ? (
-                                        isConfirming ? 'Confirming...' : 'Processing...'
-                                    ) : (
-                                        'Withdraw Liquidity'
-                                    )}
-                                </button>
-                            </div>
-
-                            {(!approvalStates.token0.hookApproved || !approvalStates.token1.hookApproved) && (
-                                <p className="text-xs text-red-600 mt-2 text-center">
-                                    Both tokens must be approved to the hook address before adding liquidity
-                                </p>
-                            )}
-                        </div>
-
-                        {error && (
-                            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                                <p className="font-medium">Transaction Failed</p>
-                                <p className="text-sm">{error.message}</p>
+                        {activeTab === 'tab2' && (
+                            <div className="text-center py-0">
+                                {/* Pool Manager Quote Display Component */}
+                                <div>
+                                    <PoolManagerQuoteDisplay />
+                                </div>
                             </div>
                         )}
 
-                        {contractError && (
-                            <div className="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg">
-                                <p className="font-medium">Contract Issue</p>
-                                <p className="text-sm">Contract not found or not accessible on {chain?.name || 'current network'}</p>
-                                <p className="text-xs mt-1">Please verify the contract address and network</p>
+                        {activeTab === 'tab3' && (
+                            <div className="text-center py-20">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Tab3</h2>
+                                <p className="text-gray-600">This is the content for Tab3</p>
                             </div>
                         )}
-
-                        {isSuccess && (
-                            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                                <p className="font-medium">Success!</p>
-                                <p className="text-sm">
-                                    Liquidity added successfully!
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="text-sm text-gray-600">
-                            <a href={linkToScan(contracts.reHypothecationHook.address)} target="_blank" rel="noopener noreferrer">
-                                <span className="font-mono underline">Hook Contract: {contracts.reHypothecationHook.address}</span>
-                            </a>
-                            <p className="mt-2 text-xs text-gray-500">
-                                Current Network: {chain?.name || 'Unknown'} (ID: {chain?.id || 'N/A'})
-                            </p>
-                            <p className="mt-1 text-xs text-blue-500">
-                                Required Network: Base Sepolia (ID: 84532)
-                            </p>
-                            <p className="mt-1 text-xs text-gray-500">
-                                Debug: Check browser console for detailed transaction logs
-                            </p>
-                            {chain?.id !== 84532 && (
-                                <p className="mt-1 text-xs text-red-500">
-                                    ⚠️ Please switch to Base Sepolia network to interact with this contract
-                                </p>
-                            )}
-
-                        </div>
                     </div>
                 </div>
             </div>
