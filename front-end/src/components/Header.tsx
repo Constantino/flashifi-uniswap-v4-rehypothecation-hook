@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { useWallet } from '../hooks/useWallet'
 
 const Header: React.FC = () => {
@@ -15,7 +16,8 @@ const Header: React.FC = () => {
                         </span>
                     </div>
                     <nav className="hidden md:flex space-x-8">
-                        <a href="#" className="text-gray-500 hover:text-gray-900">Features</a>
+                        <Link to="/" className="text-gray-500 hover:text-gray-900">Home</Link>
+                        <Link to="/features" className="text-gray-500 hover:text-gray-900">Features</Link>
                         <a href="#" className="text-gray-500 hover:text-gray-900">Documentation</a>
                         <a href="#" className="text-gray-500 hover:text-gray-900">GitHub</a>
                     </nav>
