@@ -4,6 +4,7 @@ import { useReHypothecation } from '../hooks/useReHypothecation'
 import { parseEther, maxUint256 } from 'viem'
 import { useWriteContract, useReadContract } from 'wagmi'
 import { contracts } from '../config/contracts'
+import PoolManagerQuoteDisplay from '../components/PoolManagerQuoteDisplay'
 
 const Features: React.FC = () => {
     const { isConnected, address } = useWallet()
@@ -447,6 +448,11 @@ const Features: React.FC = () => {
                     </h1>
 
                     <div className="max-w-4xl mx-auto">
+
+                        {/* Pool Manager Quote Display Component */}
+                        <div className="mb-8">
+                            <PoolManagerQuoteDisplay />
+                        </div>
 
                         <div className="mb-6">
 
