@@ -17,12 +17,12 @@ const Features: React.FC = () => {
 
     // Token addresses for approval
     const TOKEN_ADDRESSES = {
-        token1: '0xb5a19633e5e37035c07ae0513359e420408c9f2f',
-        token2: '0xeac2ce5db64e844254451c96a41acfa4ea331b5b'
+        token1: '0x8be63ebca9a9c023247e7dd93283f38865664a44',
+        token2: '0xb4beec36c585ac9b4c9c85955be87614c235bfa4'
     } as const
 
     // FlashiFi shares contract address
-    const FLASHIFI_SHARES_ADDRESS = '0x801121A59b55C913bdDBBa5Ff2dBE16CF943e0C0' as const
+    const FLASHIFI_SHARES_ADDRESS = '0x4e59b44847b379578588920ca78fbf26c0b4956c' as const
 
     // Addresses that need token approval
     const APPROVAL_ADDRESSES = {
@@ -86,7 +86,7 @@ const Features: React.FC = () => {
     })
 
     // Get FlashiFi shares balance
-    const { data: flashifiSharesBalance, refetch: refetchFlashifiSharesBalance } = useReadContract({
+    const { data: flashifiSharesBalance, refetch: refetchFlashifiSharesBalance, isLoading: isLoadingFlashifiShares } = useReadContract({
         address: FLASHIFI_SHARES_ADDRESS as `0x${string}`,
         abi: [
             {
@@ -406,10 +406,19 @@ const Features: React.FC = () => {
                                         <div>
                                             <p className="text-xs text-purple-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-purple-900">
-                                                {flashifiSharesBalance !== undefined
-                                                    ? (Number(flashifiSharesBalance) / 1e18).toFixed(6)
-                                                    : 'Loading...'
-                                                }
+                                                {(() => {
+                                                    console.log('Flashifi Shares Debug:', {
+                                                        isLoading: isLoadingFlashifiShares,
+                                                        balance: flashifiSharesBalance,
+                                                        address: address,
+                                                        isConnected: isConnected
+                                                    });
+                                                    return isLoadingFlashifiShares
+                                                        ? 'Loading...'
+                                                        : flashifiSharesBalance !== undefined && flashifiSharesBalance !== null
+                                                            ? (Number(flashifiSharesBalance) / 1e18).toFixed(6)
+                                                            : '0.000000';
+                                                })()}
                                             </p>
                                         </div>
                                         <button
@@ -432,7 +441,7 @@ const Features: React.FC = () => {
                                         <div>
                                             <p className="text-xs text-blue-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-blue-900">
-                                                {token1Balance !== undefined
+                                                {token1Balance !== undefined && token1Balance !== null
                                                     ? (Number(token1Balance) / 1e18).toFixed(6)
                                                     : 'Loading...'
                                                 }
@@ -458,7 +467,7 @@ const Features: React.FC = () => {
                                         <div>
                                             <p className="text-xs text-orange-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-orange-900">
-                                                {token2Balance !== undefined
+                                                {token2Balance !== undefined && token2Balance !== null
                                                     ? (Number(token2Balance) / 1e18).toFixed(6)
                                                     : 'Loading...'
                                                 }
