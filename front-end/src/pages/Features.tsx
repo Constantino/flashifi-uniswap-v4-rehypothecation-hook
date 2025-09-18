@@ -24,6 +24,12 @@ const Features: React.FC = () => {
     // FlashiFi shares contract address
     const FLASHIFI_SHARES_ADDRESS = '0xe35d0a4bf289646d93a18ef6dabf4732304be0c0' as const
 
+    // Vault addresses
+    const VAULT_ADDRESSES = {
+        vault0: '0x9ed4f35d3f1077ffafaf4aa4e61130af37093fec',
+        vault1: '0xc395a8cbfaf9d47479937735c32f522a6d95f9ed'
+    } as const
+
     // Addresses that need token approval
     const APPROVAL_ADDRESSES = {
         hook: contracts.reHypothecationHook.address
@@ -143,6 +149,48 @@ const Features: React.FC = () => {
         ],
         functionName: 'balanceOf',
         args: [address as `0x${string}`],
+        query: {
+            enabled: !!address && isConnected
+        }
+    })
+
+    // Get Vault 0 balance (Token 1 balance in Vault 0)
+    const { data: vault0Balance, refetch: refetchVault0Balance } = useReadContract({
+        address: TOKEN_ADDRESSES.token1 as `0x${string}`,
+        abi: [
+            {
+                "constant": true,
+                "inputs": [
+                    { "name": "_owner", "type": "address" }
+                ],
+                "name": "balanceOf",
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "type": "function"
+            }
+        ],
+        functionName: 'balanceOf',
+        args: [VAULT_ADDRESSES.vault0 as `0x${string}`],
+        query: {
+            enabled: !!address && isConnected
+        }
+    })
+
+    // Get Vault 1 balance (Token 2 balance in Vault 1)
+    const { data: vault1Balance, refetch: refetchVault1Balance } = useReadContract({
+        address: TOKEN_ADDRESSES.token2 as `0x${string}`,
+        abi: [
+            {
+                "constant": true,
+                "inputs": [
+                    { "name": "_owner", "type": "address" }
+                ],
+                "name": "balanceOf",
+                "outputs": [{ "name": "", "type": "uint256" }],
+                "type": "function"
+            }
+        ],
+        functionName: 'balanceOf',
+        args: [VAULT_ADDRESSES.vault1 as `0x${string}`],
         query: {
             enabled: !!address && isConnected
         }
@@ -436,8 +484,8 @@ const Features: React.FC = () => {
                                                     return isLoadingFlashifiShares
                                                         ? 'Loading...'
                                                         : flashifiSharesBalance !== undefined && flashifiSharesBalance !== null
-                                                            ? (Number(flashifiSharesBalance) / 1e18).toFixed(6)
-                                                            : '0.000000';
+                                                            ? (Number(flashifiSharesBalance) / 1e18).toFixed(10)
+                                                            : '0.0000000000';
                                                 })()}
                                             </p>
                                         </div>
@@ -464,7 +512,7 @@ const Features: React.FC = () => {
                                             <p className="text-xs text-blue-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-blue-900">
                                                 {token1Balance !== undefined && token1Balance !== null
-                                                    ? (Number(token1Balance) / 1e18).toFixed(6)
+                                                    ? (Number(token1Balance) / 1e18).toFixed(10)
                                                     : 'Loading...'
                                                 }
                                             </p>
@@ -492,7 +540,7 @@ const Features: React.FC = () => {
                                             <p className="text-xs text-orange-600 mb-1">Current Balance</p>
                                             <p className="text-lg font-semibold text-orange-900">
                                                 {token2Balance !== undefined && token2Balance !== null
-                                                    ? (Number(token2Balance) / 1e18).toFixed(6)
+                                                    ? (Number(token2Balance) / 1e18).toFixed(10)
                                                     : 'Loading...'
                                                 }
                                             </p>
@@ -507,6 +555,65 @@ const Features: React.FC = () => {
                                         <p className="text-xs text-orange-600 break-all">
                                             <a href={linkToScan(TOKEN_ADDRESSES.token2)} target="_blank" rel="noopener noreferrer">
                                                 <span className="font-mono underline">{TOKEN_ADDRESSES.token2.slice(0, 6)}...{TOKEN_ADDRESSES.token2.slice(-4)}</span>
+                                            </a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Vault Balances - Horizontal Layout */}
+                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Vault 0 Balance Section */}
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-green-800 mb-3">Vault 0 (Token 1)</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-green-600 mb-1">Token 1 Balance in Vault</p>
+                                            <p className="text-lg font-semibold text-green-900">
+                                                {vault0Balance !== undefined && vault0Balance !== null
+                                                    ? (Number(vault0Balance) / 1e18).toFixed(10)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchVault0Balance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-green-600 break-all">
+                                            <a href={linkToScan(VAULT_ADDRESSES.vault0)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{VAULT_ADDRESSES.vault0.slice(0, 6)}...{VAULT_ADDRESSES.vault0.slice(-4)}</span>
+                                            </a>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Vault 1 Balance Section */}
+                                <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                    <h3 className="text-sm font-medium text-indigo-800 mb-3">Vault 1 (Token 2)</h3>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-indigo-600 mb-1">Token 2 Balance in Vault</p>
+                                            <p className="text-lg font-semibold text-indigo-900">
+                                                {vault1Balance !== undefined && vault1Balance !== null
+                                                    ? (Number(vault1Balance) / 1e18).toFixed(10)
+                                                    : 'Loading...'
+                                                }
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => refetchVault1Balance()}
+                                            disabled={!isConnected}
+                                            className="w-full px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh
+                                        </button>
+                                        <p className="text-xs text-indigo-600 break-all">
+                                            <a href={linkToScan(VAULT_ADDRESSES.vault1)} target="_blank" rel="noopener noreferrer">
+                                                <span className="font-mono underline">{VAULT_ADDRESSES.vault1.slice(0, 6)}...{VAULT_ADDRESSES.vault1.slice(-4)}</span>
                                             </a>
                                         </p>
                                     </div>
