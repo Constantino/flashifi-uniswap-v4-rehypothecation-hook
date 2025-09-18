@@ -66,7 +66,6 @@ contract MockTokenUniswapPool is Script {
         console.log("Deploying ReHypothecation hook...");
         deployHook();
         console.log("Hook deployed at:", address(hook));
-        console.log("Hook owner:", hook.owner());
 
         // Deploy mock tokens
         token0 = new MockERC20("Token00", "T00");
@@ -90,8 +89,8 @@ contract MockTokenUniswapPool is Script {
         token0.approve(address(hook), type(uint256).max);
         token1.approve(address(hook), type(uint256).max);
 
-        // Set the vault addresses for the hook (as owner)
-        // The deployer (msg.sender) is the owner of the hook contract
+        // Set the vault addresses for the hook
+        // Anyone can call setVaults since we removed ownership restrictions
         console.log("Setting vault addresses for hook...");
         console.log("Vault0 address:", address(vault0));
         console.log("Vault1 address:", address(vault1));

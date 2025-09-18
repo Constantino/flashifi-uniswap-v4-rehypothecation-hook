@@ -78,8 +78,7 @@ contract ReHypothecationTest is Test, Deployers {
         (key,) = initPool(currency0, currency1, IHooks(address(hook)), fee, SQRT_PRICE_1_1);
         (noHookKey,) = initPool(currency0, currency1, IHooks(address(0)), fee, SQRT_PRICE_1_1);
 
-        // Call setVaults as the owner (the deployer)
-        vm.prank(address(this));
+        // Call setVaults
         hook.setVaults(address(yieldSource0), address(yieldSource1));
 
         IERC20(Currency.unwrap(currency0)).approve(address(hook), type(uint256).max);
@@ -94,16 +93,15 @@ contract ReHypothecationTest is Test, Deployers {
         initPool(currency0, currency1, IHooks(address(hook)), fee, SQRT_PRICE_1_1);
     }
 
-    function test_setVaults_onlyOwner() public {
-        address nonOwner = makeAddr("nonOwner");
+    function test_setVaults_anyone() public {
+        address randomUser = makeAddr("randomUser");
 
-        // Test that non-owner cannot call setVaults
-        vm.prank(nonOwner);
-        vm.expectRevert();
+        // Test that anyone can call setVaults
+        vm.prank(randomUser);
         hook.setVaults(address(yieldSource0), address(yieldSource1));
 
-        // Test that owner can call setVaults
-        vm.prank(address(this));
+        // Test that the same user can call setVaults again
+        vm.prank(randomUser);
         hook.setVaults(address(yieldSource0), address(yieldSource1));
     }
 
@@ -112,13 +110,11 @@ contract ReHypothecationTest is Test, Deployers {
         vm.expectEmit(true, true, false, true);
         emit ReHypothecation.VaultsSet(address(yieldSource0), address(yieldSource1));
 
-        vm.prank(address(this));
         hook.setVaults(address(yieldSource0), address(yieldSource1));
     }
 
     function test_setVaults_zeroAddress() public {
         // Test setting zero address vaults (should not revert, but may cause issues later)
-        vm.prank(address(this));
         hook.setVaults(address(0), address(0));
 
         // Verify vaults are set to zero
@@ -127,7 +123,6 @@ contract ReHypothecationTest is Test, Deployers {
 
     function test_setVaults_sameAddress() public {
         // Test setting same address for both vaults
-        vm.prank(address(this));
         hook.setVaults(address(yieldSource0), address(yieldSource0));
     }
 
@@ -333,7 +328,6 @@ contract ReHypothecationTest is Test, Deployers {
         MockFailingVault failingVault = new MockFailingVault(IERC20(Currency.unwrap(currency0)));
 
         // Set the failing vault
-        vm.prank(address(this));
         hook.setVaults(address(failingVault), address(yieldSource1));
 
         // Try to add liquidity (should fail)
@@ -350,7 +344,6 @@ contract ReHypothecationTest is Test, Deployers {
         MockFailingVault failingVault = new MockFailingVault(IERC20(Currency.unwrap(currency0)));
 
         // Set the failing vault
-        vm.prank(address(this));
         hook.setVaults(address(failingVault), address(yieldSource1));
 
         // Try to remove liquidity (should fail)
@@ -475,22 +468,6 @@ contract ReHypothecationTest is Test, Deployers {
 
         // Verify clean removal
         assertEq(hook.balanceOf(address(this)), 0, "Should remove all liquidity");
-    }
-
-    // Edge case tests for ownership transfer
-    function test_ownership_transfer() public {
-        address newOwner = makeAddr("newOwner");
-
-        // Transfer ownership
-        hook.transferOwnership(newOwner);
-
-        // Old owner should not be able to set vaults
-        vm.expectRevert();
-        hook.setVaults(address(yieldSource0), address(yieldSource1));
-
-        // New owner should be able to set vaults
-        vm.prank(newOwner);
-        hook.setVaults(address(yieldSource0), address(yieldSource1));
     }
 
     // Edge case tests for ERC20 edge cases
