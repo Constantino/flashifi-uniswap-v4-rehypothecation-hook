@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useWallet } from '../hooks/useWallet'
 import { useReHypothecation } from '../hooks/useReHypothecation'
 import { usePoolManagerQuote } from '../hooks/usePoolManagerQuote'
-import { parseEther, maxUint256 } from 'viem'
+import { useQuote } from '../hooks/useQuote'
+import { parseEther, maxUint256, formatEther } from 'viem'
 import { useWriteContract, useReadContract } from 'wagmi'
 import { contracts } from '../config/contracts'
 import PoolManagerQuoteDisplay from '../components/PoolManagerQuoteDisplay'
@@ -11,6 +12,7 @@ const Features: React.FC = () => {
     const { isConnected, address } = useWallet()
     const { addReHypothecatedLiquidityWithValue, removeReHypothecatedLiquidity, isPending, isConfirming, isSuccess, error, contractError, chain } = useReHypothecation()
     const { calculateLiquidityDeltas, poolInitialized } = usePoolManagerQuote()
+    const { poolKey, slot0Data, poolInitialized: quotePoolInitialized, calculateQuote, getQuote } = useQuote()
     const { writeContract: writeContractForApproval } = useWriteContract()
     const [liquidityAmount, setLiquidityAmount] = useState('')
     const [needsApproval, setNeedsApproval] = useState(false)
@@ -19,6 +21,14 @@ const Features: React.FC = () => {
     const [isApprovalsExpanded, setIsApprovalsExpanded] = useState(false)
     const [liquidityDeltas, setLiquidityDeltas] = useState<any>(null)
     const [activeTab, setActiveTab] = useState('tab1')
+
+    // Swap state
+    const [swapAmount, setSwapAmount] = useState('')
+    const [swapDirection, setSwapDirection] = useState<'token0ToToken1' | 'token1ToToken0'>('token0ToToken1')
+    const [swapQuote, setSwapQuote] = useState<any>(null)
+    const [isSwapping, setIsSwapping] = useState(false)
+    const [swapSuccess, setSwapSuccess] = useState(false)
+    const [swapError, setSwapError] = useState<string | null>(null)
 
     // Calculate deltas when liquidity amount changes
     useEffect(() => {
@@ -30,19 +40,29 @@ const Features: React.FC = () => {
         }
     }, [liquidityAmount, poolInitialized, calculateLiquidityDeltas])
 
-    // Token addresses for approval
+    // Calculate swap quote when swap amount or direction changes
+    useEffect(() => {
+        if (quotePoolInitialized && swapAmount && swapAmount !== '0' && parseFloat(swapAmount) > 0) {
+            const quote = calculateQuote(swapAmount, swapDirection === 'token0ToToken1')
+            setSwapQuote(quote)
+        } else {
+            setSwapQuote(null)
+        }
+    }, [swapAmount, swapDirection, quotePoolInitialized, calculateQuote])
+
+    // Token addresses from successful deployment (script 25)
     const TOKEN_ADDRESSES = {
-        token0: '0x8be63ebca9a9c023247e7dd93283f38865664a44',
-        token1: '0xb4beec36c585ac9b4c9c85955be87614c235bfa4'
+        token0: '0x527d20Fc27D03c33Eb9909079b0AB1C844Fb375E',
+        token1: '0xdbd54f088b97cd4af1dee26a6cb14cd89499ce1e'
     } as const
 
     // FlashiFi shares contract address
-    const FLASHIFI_SHARES_ADDRESS = '0xe35d0a4bf289646d93a18ef6dabf4732304be0c0' as const
+    const FLASHIFI_SHARES_ADDRESS = '0xfd6a5e131eb3e022a354783a0768799eadf020c0' as const
 
-    // Vault addresses
+    // Vault addresses from successful deployment (script 25)
     const VAULT_ADDRESSES = {
-        vault0: '0x9ed4f35d3f1077ffafaf4aa4e61130af37093fec',
-        vault1: '0xc395a8cbfaf9d47479937735c32f522a6d95f9ed'
+        vault0: '0xaD29Fc8D90e8d8662c31420BDD14dD5283722dbA',
+        vault1: '0xbDBEAdD39E26C2D36A4B390CA4335a46E1310Cd1'
     } as const
 
     // Addresses that need token approval
@@ -168,6 +188,20 @@ const Features: React.FC = () => {
             enabled: !!address && isConnected
         }
     })
+
+    // Debug token1 balance
+    useEffect(() => {
+        if (token1Balance !== undefined) {
+            console.log('Token1 Balance Debug:', {
+                rawBalance: token1Balance,
+                rawBalanceString: token1Balance?.toString(),
+                formattedBalance: token1Balance ? formatEther(token1Balance) : '0',
+                expectedBalance: '20000999994901080435521024',
+                address: TOKEN_ADDRESSES.token1,
+                userAddress: address
+            })
+        }
+    }, [token1Balance, address])
 
     // Get Vault 0 balance (Token 0 balance in Vault 0)
     const { data: vault0Balance, refetch: refetchVault0Balance } = useReadContract({
@@ -422,7 +456,7 @@ const Features: React.FC = () => {
                     }
                 ],
                 functionName: 'mint',
-                args: [address as `0x${string}`, parseEther('1000')],
+                args: [address as `0x${string}`, parseEther('10000000')],
             })
 
             // Mint Token 1
@@ -441,7 +475,7 @@ const Features: React.FC = () => {
                     }
                 ],
                 functionName: 'mint',
-                args: [address as `0x${string}`, parseEther('1000')],
+                args: [address as `0x${string}`, parseEther('10000000')],
             })
 
         } catch (err) {
@@ -449,6 +483,143 @@ const Features: React.FC = () => {
         } finally {
             setIsMinting(false)
         }
+    }
+
+    const handleSwap = async () => {
+        if (!isConnected) {
+            alert('Please connect your wallet first')
+            return
+        }
+
+        if (!swapAmount || parseFloat(swapAmount) <= 0) {
+            alert('Please enter a valid swap amount')
+            return
+        }
+
+        if (!swapQuote) {
+            alert('Unable to calculate swap quote. Please try again.')
+            return
+        }
+
+        // Check if we're on the right network first
+        if (chain?.id !== 84532) {
+            alert('Please switch to Base Sepolia network (Chain ID: 84532) first')
+            return
+        }
+
+        try {
+            setIsSwapping(true)
+            setSwapError(null)
+            setSwapSuccess(false)
+
+            const swapAmountWei = parseEther(swapAmount)
+
+            // Approve tokens to SwapHelper contract if needed
+            const swapHelperAddress = '0x5b73c5498c1e3b4dba84de0f1833c4a029d90519'
+
+            // Check if we need to approve tokens to the SwapHelper
+            const tokenToApprove = swapDirection === 'token0ToToken1' ? TOKEN_ADDRESSES.token0 : TOKEN_ADDRESSES.token1
+
+            // Approve the SwapHelper to spend the token
+            await writeContractForApproval({
+                address: tokenToApprove as `0x${string}`,
+                abi: [
+                    {
+                        "constant": false,
+                        "inputs": [
+                            { "name": "_spender", "type": "address" },
+                            { "name": "_value", "type": "uint256" }
+                        ],
+                        "name": "approve",
+                        "outputs": [{ "name": "", "type": "bool" }],
+                        "type": "function"
+                    }
+                ],
+                functionName: 'approve',
+                args: [swapHelperAddress as `0x${string}`, swapAmountWei],
+            })
+
+            // Calculate sqrtPriceLimitX96 for the swap
+            // Using minimum price limit for safety
+            const sqrtPriceLimitX96 = swapDirection === 'token0ToToken1'
+                ? BigInt('0x1000000000000000000000000') // Minimum price
+                : BigInt('0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') // Maximum price
+
+            // Use the deployed SwapHelper contract instead of calling PoolManager directly
+            // This avoids the ManagerLocked error by using the proper swap pattern
+            await writeContractForApproval({
+                address: '0x5b73c5498c1e3b4dba84de0f1833c4a029d90519' as `0x${string}`,
+                abi: [
+                    {
+                        "constant": false,
+                        "inputs": [
+                            {
+                                "name": "key",
+                                "type": "tuple",
+                                "components": [
+                                    { "name": "currency0", "type": "address" },
+                                    { "name": "currency1", "type": "address" },
+                                    { "name": "fee", "type": "uint24" },
+                                    { "name": "tickSpacing", "type": "int24" },
+                                    { "name": "hooks", "type": "address" }
+                                ]
+                            },
+                            {
+                                "name": "params",
+                                "type": "tuple",
+                                "components": [
+                                    { "name": "zeroForOne", "type": "bool" },
+                                    { "name": "amountSpecified", "type": "int256" },
+                                    { "name": "sqrtPriceLimitX96", "type": "uint160" }
+                                ]
+                            },
+                            { "name": "hookData", "type": "bytes" }
+                        ],
+                        "name": "swap",
+                        "outputs": [{ "name": "delta", "type": "int128" }],
+                        "type": "function"
+                    }
+                ],
+                functionName: 'swap',
+                args: [
+                    poolKey,
+                    {
+                        zeroForOne: swapDirection === 'token0ToToken1',
+                        amountSpecified: swapDirection === 'token0ToToken1' ? swapAmountWei : -swapAmountWei,
+                        sqrtPriceLimitX96: sqrtPriceLimitX96
+                    },
+                    '0x' // Empty hook data
+                ],
+            })
+
+            setSwapSuccess(true)
+
+            // Refresh balances after successful swap
+            setTimeout(() => {
+                console.log('Refreshing balances after swap...')
+                refetchToken0Balance()
+                refetchToken1Balance()
+                refetchVault0Balance()
+                refetchVault1Balance()
+                refetchFlashifiSharesBalance()
+            }, 3000) // Increased delay to 3 seconds
+
+        } catch (err: any) {
+            console.error('Error executing swap:', err)
+            setSwapError(err.message || 'Swap failed')
+        } finally {
+            setIsSwapping(false)
+        }
+    }
+
+    // Manual refresh all balances function
+    const refreshAllBalances = () => {
+        console.log('Manually refreshing all balances...')
+        refetchToken0Balance()
+        refetchToken1Balance()
+        refetchVault0Balance()
+        refetchVault1Balance()
+        refetchFlashifiSharesBalance()
     }
 
     const isLoading = isPending || isConfirming || isMinting
@@ -483,15 +654,6 @@ const Features: React.FC = () => {
                                 >
                                     Quoter
                                 </button>
-                                <button
-                                    onClick={() => setActiveTab('tab3')}
-                                    className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'tab3'
-                                        ? 'border-blue-500 text-blue-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        }`}
-                                >
-                                    Swap
-                                </button>
                             </nav>
                         </div>
                     </div>
@@ -508,14 +670,29 @@ const Features: React.FC = () => {
                                     <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                                         <h3 className="text-sm font-medium text-green-800 mb-3">Get Test Tokens</h3>
                                         <p className="text-xs text-green-600 mb-4">
-                                            Mint 1000 units of both test tokens to your connected address for testing purposes.
+                                            Mint 10,000,000 units of both test tokens to your connected address for testing purposes.
                                         </p>
                                         <button
                                             onClick={handleMintTokens}
                                             disabled={!isConnected || isMinting}
                                             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {isMinting ? 'Minting Tokens...' : 'Mint 1000 units of both test tokens'}
+                                            {isMinting ? 'Minting Tokens...' : 'Mint 10,000,000 units of both test tokens'}
+                                        </button>
+                                    </div>
+
+                                    {/* Refresh All Balances Button */}
+                                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                        <h3 className="text-sm font-medium text-blue-800 mb-3">Refresh Balances</h3>
+                                        <p className="text-xs text-blue-600 mb-4">
+                                            Manually refresh all token and vault balances to get the latest values.
+                                        </p>
+                                        <button
+                                            onClick={refreshAllBalances}
+                                            disabled={!isConnected}
+                                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Refresh All Balances
                                         </button>
                                     </div>
 
@@ -527,7 +704,7 @@ const Features: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-purple-600 mb-1">Current Balance</p>
-                                                    <p className="text-lg font-semibold text-purple-900">
+                                                    <p className="decimal-display text-purple-900">
                                                         {(() => {
                                                             console.log('Flashifi Shares Debug:', {
                                                                 isLoading: isLoadingFlashifiShares,
@@ -538,8 +715,8 @@ const Features: React.FC = () => {
                                                             return isLoadingFlashifiShares
                                                                 ? 'Loading...'
                                                                 : flashifiSharesBalance !== undefined && flashifiSharesBalance !== null
-                                                                    ? (Number(flashifiSharesBalance) / 1e18).toFixed(10)
-                                                                    : '0.0000000000';
+                                                                    ? (Number(flashifiSharesBalance) / 1e18).toFixed(18)
+                                                                    : '0.000000000000000000';
                                                         })()}
                                                     </p>
                                                 </div>
@@ -564,9 +741,9 @@ const Features: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-blue-600 mb-1">Current Balance</p>
-                                                    <p className="text-lg font-semibold text-blue-900">
+                                                    <p className="decimal-display text-blue-900">
                                                         {token0Balance !== undefined && token0Balance !== null
-                                                            ? (Number(token0Balance) / 1e18).toFixed(10)
+                                                            ? (Number(token0Balance) / 1e18).toFixed(18)
                                                             : 'Loading...'
                                                         }
                                                     </p>
@@ -592,9 +769,9 @@ const Features: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-orange-600 mb-1">Current Balance</p>
-                                                    <p className="text-lg font-semibold text-orange-900">
+                                                    <p className="decimal-display text-orange-900">
                                                         {token1Balance !== undefined && token1Balance !== null
-                                                            ? (Number(token1Balance) / 1e18).toFixed(10)
+                                                            ? formatEther(token1Balance)
                                                             : 'Loading...'
                                                         }
                                                     </p>
@@ -623,9 +800,9 @@ const Features: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-green-600 mb-1">Token 0 Balance in Vault</p>
-                                                    <p className="text-lg font-semibold text-green-900">
+                                                    <p className="decimal-display text-green-900">
                                                         {vault0Balance !== undefined && vault0Balance !== null
-                                                            ? (Number(vault0Balance) / 1e18).toFixed(10)
+                                                            ? (Number(vault0Balance) / 1e18).toFixed(18)
                                                             : 'Loading...'
                                                         }
                                                     </p>
@@ -651,9 +828,9 @@ const Features: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div>
                                                     <p className="text-xs text-indigo-600 mb-1">Token 1 Balance in Vault</p>
-                                                    <p className="text-lg font-semibold text-indigo-900">
+                                                    <p className="decimal-display text-indigo-900">
                                                         {vault1Balance !== undefined && vault1Balance !== null
-                                                            ? (Number(vault1Balance) / 1e18).toFixed(10)
+                                                            ? (Number(vault1Balance) / 1e18).toFixed(18)
                                                             : 'Loading...'
                                                         }
                                                     </p>
@@ -694,22 +871,22 @@ const Features: React.FC = () => {
                                         {liquidityDeltas && (
                                             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                                 <div className="text-sm font-medium text-blue-800 mb-2">Expected Token Deltas:</div>
-                                                <div className="grid grid-cols-2 gap-4 text-xs">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Token0 Delta:</span>
-                                                        <span className="font-mono text-blue-700">
-                                                            {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
+                                                <div className="space-y-2 text-xs">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-gray-600 mb-1">Token0 Delta:</span>
+                                                        <span className="font-mono text-blue-700 break-all">
+                                                            {parseFloat(liquidityDeltas.token0Delta).toFixed(18)}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-600">Token0 Delta:</span>
-                                                        <span className="font-mono text-blue-700">
-                                                            {parseFloat(liquidityDeltas.token0Delta).toFixed(6)}
+                                                    <div className="flex flex-col">
+                                                        <span className="text-gray-600 mb-1">Token1 Delta:</span>
+                                                        <span className="font-mono text-blue-700 break-all">
+                                                            {parseFloat(liquidityDeltas.token1Delta).toFixed(18)}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between col-span-2">
-                                                        <span className="text-gray-600">Current Price:</span>
-                                                        <span className="font-mono text-blue-700">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-gray-600 mb-1">Current Price:</span>
+                                                        <span className="font-mono text-blue-700 break-all">
                                                             {parseFloat(liquidityDeltas.price).toFixed(18)} Token1/Token0
                                                         </span>
                                                     </div>
@@ -966,12 +1143,7 @@ const Features: React.FC = () => {
                             </div>
                         )}
 
-                        {activeTab === 'tab3' && (
-                            <div className="text-center py-20">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Tab3</h2>
-                                <p className="text-gray-600">This is the content for Tab3</p>
-                            </div>
-                        )}
+
                     </div>
                 </div>
             </div>

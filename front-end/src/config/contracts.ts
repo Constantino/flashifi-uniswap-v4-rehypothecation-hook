@@ -11,10 +11,10 @@ export const REHYPOTHECATION_HOOK_ADDRESSES = {
     // Polygon
     137: '0x203B76693AE741460C55018bd84f6859188d60C0',
     // Base Sepolia testnet (where contract is actually deployed)
-    84532: '0xe35d0a4bf289646d93a18ef6dabf4732304be0c0',
+    84532: '0xfd6a5e131eb3e022a354783a0768799eadf020c0',
 } as const
 
-export const REHYPOTHECATION_HOOK_ADDRESS = '0xe35d0a4bf289646d93a18ef6dabf4732304be0c0' as const
+export const REHYPOTHECATION_HOOK_ADDRESS = '0xfd6a5e131eb3e022a354783a0768799eadf020c0' as const
 
 export const contracts = {
     reHypothecationHook: {

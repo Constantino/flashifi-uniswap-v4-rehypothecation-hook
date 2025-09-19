@@ -12,11 +12,11 @@ export async function testPoolStateReading() {
     const POOL_MANAGER_ADDRESS = '0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408' as const
 
     const poolKey = {
-        currency0: '0x8bE63EBcA9A9c023247E7DD93283f38865664A44' as `0x${string}`,
-        currency1: '0xb4BEEC36c585AC9b4c9C85955be87614C235BfA4' as `0x${string}`,
+        currency0: '0x527d20fc27d03c33eb9909079b0ab1c844fb375e' as `0x${string}`,
+        currency1: '0xdbd54f088b97cd4af1dee26a6cb14cd89499ce1e' as `0x${string}`,
         fee: 300,
         tickSpacing: 60,
-        hooks: '0xE35D0a4BF289646D93A18ef6dAbF4732304be0C0' as `0x${string}`
+        hooks: '0xfd6a5e131eb3e022a354783a0768799eadf020c0' as `0x${string}`
     }
 
     // Calculate pool ID using correct method

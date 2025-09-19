@@ -150,43 +150,79 @@ const PoolManagerQuoteDisplay: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-3 bg-white rounded border">
                             <h4 className="font-medium text-gray-800 mb-2">Token0 → Token1</h4>
-                            <p className="text-sm text-gray-600">
-                                <strong>Input:</strong> {quotes.token0Quote?.inputAmount} Token0
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                <strong>Output:</strong> {quotes.token0Quote?.outputAmount} Token1
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                <strong>Price:</strong> {quotes.token0Quote?.price} Token1 per Token0
-                            </p>
+                            <div className="space-y-2">
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Input:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token0Quote?.inputAmount} Token0
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Output:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token0Quote?.outputAmount} Token1
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Price:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token0Quote?.price} Token1 per Token0
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                         <div className="p-3 bg-white rounded border">
                             <h4 className="font-medium text-gray-800 mb-2">Token1 → Token0</h4>
-                            <p className="text-sm text-gray-600">
-                                <strong>Input:</strong> {quotes.token1Quote?.inputAmount} Token1
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                <strong>Output:</strong> {quotes.token1Quote?.outputAmount} Token0
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                <strong>Price:</strong> {quotes.token1Quote?.price} Token0 per Token1
-                            </p>
+                            <div className="space-y-2">
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Input:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token1Quote?.inputAmount} Token1
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Output:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token1Quote?.outputAmount} Token0
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 mb-1">Price:</p>
+                                    <p className="text-sm font-mono text-gray-800 break-all">
+                                        {quotes.token1Quote?.price} Token0 per Token1
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div className="mt-4 p-3 bg-white rounded border">
-                        <h4 className="font-medium text-gray-800 mb-2">Pool Information</h4>
-                        <p className="text-sm text-gray-600">
-                            <strong>Current Price (Token1/Token0):</strong> {quotes.currentPrice}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            <strong>Inverse Price (Token0/Token1):</strong> {quotes.inversePrice}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            <strong>SqrtPriceX96:</strong> {quotes.sqrtPriceX96}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            <strong>Price in Wei:</strong> {quotes.priceInWei}
-                        </p>
+                        <h4 className="font-medium text-gray-800 mb-3">Pool Information</h4>
+                        <div className="space-y-2">
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1">Current Price (Token1/Token0):</p>
+                                <p className="text-sm font-mono text-gray-800 break-all">
+                                    {quotes.currentPrice}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1">Inverse Price (Token0/Token1):</p>
+                                <p className="text-sm font-mono text-gray-800 break-all">
+                                    {quotes.inversePrice}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1">SqrtPriceX96:</p>
+                                <p className="text-xs font-mono text-gray-600 break-all">
+                                    {quotes.sqrtPriceX96}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-gray-500 mb-1">Price in Wei:</p>
+                                <p className="text-xs font-mono text-gray-600 break-all">
+                                    {quotes.priceInWei}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
