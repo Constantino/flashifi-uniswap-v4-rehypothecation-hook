@@ -4,6 +4,12 @@
 
 The ReHypothecation Hook enables liquidity providers to deposit their assets into yield-generating vaults (ERC4626) while simultaneously providing Just-in-Time (JIT) liquidity to Uniswap v4 pools. This creates a novel mechanism where idle liquidity earns yield while being available for trading.
 
+## No partner integrations
+
+## Inspiration
+
+This project was inspired by the [OpenZeppelin RehypothecationHook implementation](https://github.com/OpenZeppelin/uniswap-hooks/pull/84/files), but has been reimagined and implemented to align with FlashiFi's thesis.
+
 ## Overview
 
 The ReHypothecation Hook implements a sophisticated liquidity management system that:
@@ -282,9 +288,7 @@ forge script script/00_CorrectedSwapTest.s.sol:CorrectedSwapTest --rpc-url http:
 - **ERC20 Compliance**: Full ERC20 standard implementation with proper transfer mechanics
 - **Hook Permissions**: Properly configured hook permissions for Uniswap v4 integration
 
-## Inspiration
 
-This project was inspired by the [OpenZeppelin RehypothecationHook implementation](https://github.com/OpenZeppelin/uniswap-hooks/pull/84/files), but has been reimagined and implemented to align with FlashiFi's thesis.
 
 ## Additional Resources
 
