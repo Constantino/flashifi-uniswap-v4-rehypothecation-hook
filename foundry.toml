@@ -13,5 +13,5 @@ bytecode_hash = "none"
 cse = true
 constant_optimizer = true
 
-[lint]
+[profile.lint]
 exclude_lints = ["screaming-snake-case-immutable", "screaming-snake-case-const"]
