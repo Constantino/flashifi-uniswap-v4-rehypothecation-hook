@@ -3,24 +3,34 @@ import React from 'react'
 const Features: React.FC = () => {
     const features = [
         {
-            title: 'Idle Capital Utilization',
-            description: 'Put your idle liquidity to work by automatically depositing assets into ERC4626 yield-generating vaults',
+            title: 'Advanced Rehypothecation',
+            description: 'Deposit assets into ERC4626 yield vaults while maintaining full liquidity availability for Uniswap V4 trading through automated JIT provision',
             icon: '💰'
         },
         {
             title: 'Just-in-Time Liquidity',
-            description: 'Provide liquidity exactly when needed for swaps, then return assets to vaults for continued yield generation',
+            description: 'Automatically provides full-range liquidity during swaps using vault assets, then immediately removes it to return assets to yield-generating vaults',
             icon: '⚡'
         },
         {
-            title: 'Rehypothecation Strategy',
-            description: 'Rehypothecate your assets to earn yield while maintaining availability for Uniswap V4 trading',
+            title: 'ERC20 Share System',
+            description: 'Receive transferable FFRH tokens representing your rehypothecated position with proportional vault asset ownership',
             icon: '🔄'
         },
         {
-            title: 'Uniswap V4 Integration',
-            description: 'Seamlessly integrates with Uniswap V4 hooks to provide JIT liquidity during swaps',
+            title: 'Uniswap V4 Hook Integration',
+            description: 'Native Uniswap V4 hook implementation with beforeSwap/afterSwap callbacks for seamless JIT liquidity management',
             icon: '🦄'
+        },
+        {
+            title: 'Multi-User Support',
+            description: 'Support for multiple liquidity providers with proportional share-based asset management and individual withdrawal capabilities',
+            icon: '👥'
+        },
+        {
+            title: 'Public Configuration',
+            description: 'Anyone can configure vault addresses for different yield strategies, enabling flexible and decentralized vault management',
+            icon: '⚙️'
         }
     ]
 
@@ -35,7 +45,7 @@ const Features: React.FC = () => {
                         Maximize capital efficiency through rehypothecation and just-in-time liquidity provision
                     </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {features.map((feature, index) => (
                         <div key={index} className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
                             <div className="text-4xl mb-4">{feature.icon}</div>
