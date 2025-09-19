@@ -33,7 +33,7 @@ contract SimpleSwapOnly is Script {
     int24 constant TICK_SPACING = 60;
 
     // Swap configuration
-    uint256 constant SWAP_AMOUNT = 100000000000000000000000; // Amount to swap (in wei)
+    uint256 constant SWAP_AMOUNT = 100000; // Amount to swap (in wei)
     bool constant ZERO_FOR_ONE = true; // true = Token0 -> Token1, false = Token1 -> Token0
 
     function run() public {

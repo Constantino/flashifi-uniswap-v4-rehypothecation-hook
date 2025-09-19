@@ -8,7 +8,7 @@ The ReHypothecation Hook enables liquidity providers to deposit their assets int
 
 ## Inspiration
 
-This project was inspired by the [OpenZeppelin RehypothecationHook implementation](https://github.com/OpenZeppelin/uniswap-hooks/pull/84/files), but has been reimagined and implemented to align with FlashiFi's thesis.
+This project was inspired by the [OpenZeppelin RehypothecationHook implementation](https://github.com/OpenZeppelin/uniswap-hooks/pull/84/files), but has been reimagined and implemented to align with FlashiFi's thesis have workable code.
 
 ## Overview
 
