@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Hero: React.FC = () => {
     return (
@@ -11,13 +12,10 @@ const Hero: React.FC = () => {
                     <p className="text-xl md:text-2xl mb-8 text-blue-100">
                         Maximize capital efficiency through advanced rehypothecation strategies
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    <div className="flex justify-center">
+                        <Link to="/features" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                             Get Started
-                        </button>
-                        <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
-                            Learn More
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

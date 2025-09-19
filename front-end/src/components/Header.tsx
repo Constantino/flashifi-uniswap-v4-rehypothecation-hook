@@ -22,9 +22,8 @@ const Header: React.FC = () => {
                     </div>
                     <nav className="hidden md:flex space-x-8">
                         <Link to="/" className="text-gray-500 hover:text-gray-900">Home</Link>
-                        <Link to="/features" className="text-gray-500 hover:text-gray-900">Features</Link>
-                        <a href="#" className="text-gray-500 hover:text-gray-900">Documentation</a>
-                        <a href="#" className="text-gray-500 hover:text-gray-900">GitHub</a>
+                        <Link to="/features" className="text-gray-500 hover:text-gray-900">App</Link>
+                        <a href="https://github.com/Constantino/flashifi-uniswap-v4-rehypothecation-hook" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-gray-900">GitHub</a>
                     </nav>
                     <div className="flex items-center space-x-4">
                         {isConnected ? (
