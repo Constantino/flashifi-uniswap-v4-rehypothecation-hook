@@ -282,6 +282,10 @@ forge script script/00_CorrectedSwapTest.s.sol:CorrectedSwapTest --rpc-url http:
 - **ERC20 Compliance**: Full ERC20 standard implementation with proper transfer mechanics
 - **Hook Permissions**: Properly configured hook permissions for Uniswap v4 integration
 
+## Inspiration
+
+This project was inspired by the [OpenZeppelin RehypothecationHook implementation](https://github.com/OpenZeppelin/uniswap-hooks/pull/84/files), but has been reimagined and implemented to align with FlashiFi's thesis.
+
 ## Additional Resources
 
 - [Uniswap v4 Documentation](https://docs.uniswap.org/contracts/v4/overview)
