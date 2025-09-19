@@ -3,24 +3,24 @@ import React from 'react'
 const Features: React.FC = () => {
     const features = [
         {
-            title: 'Capital Efficiency',
-            description: 'Maximize your liquidity by rehypothecating assets across multiple protocols',
+            title: 'Idle Capital Utilization',
+            description: 'Put your idle liquidity to work by automatically depositing assets into ERC4626 yield-generating vaults',
             icon: '💰'
         },
         {
-            title: 'Risk Management',
-            description: 'Advanced risk assessment and automated position management',
-            icon: '🛡️'
-        },
-        {
-            title: 'Yield Optimization',
-            description: 'Automatically find and execute the best yield opportunities',
-            icon: '📈'
-        },
-        {
-            title: 'Gas Optimization',
-            description: 'Minimize transaction costs with efficient batching and routing',
+            title: 'Just-in-Time Liquidity',
+            description: 'Provide liquidity exactly when needed for swaps, then return assets to vaults for continued yield generation',
             icon: '⚡'
+        },
+        {
+            title: 'Rehypothecation Strategy',
+            description: 'Rehypothecate your assets to earn yield while maintaining availability for Uniswap V4 trading',
+            icon: '🔄'
+        },
+        {
+            title: 'Uniswap V4 Integration',
+            description: 'Seamlessly integrates with Uniswap V4 hooks to provide JIT liquidity during swaps',
+            icon: '🦄'
         }
     ]
 
@@ -32,7 +32,7 @@ const Features: React.FC = () => {
                         Powerful Features
                     </h2>
                     <p className="text-xl text-gray-600">
-                        Built for the future of DeFi with Uniswap V4
+                        Maximize capital efficiency through rehypothecation and just-in-time liquidity provision
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
