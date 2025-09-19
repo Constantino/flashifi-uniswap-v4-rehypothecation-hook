@@ -139,7 +139,6 @@ The test suite (`test/ReHypothecation.t.sol`) includes comprehensive coverage wi
 - ✅ **Max approval**: Type(uint256).max allowance
 
 ### Security and Access Control Tests
-- ✅ **Public vault configuration**: Anyone can set vault addresses
 - ✅ **Input validation**: Proper parameter validation
 - ✅ **Pool key validation**: Currency and configuration checks
 - ✅ **Vault address mapping**: Correct currency-to-vault mapping
@@ -226,7 +225,6 @@ forge script script/00_CorrectedSwapTest.s.sol:CorrectedSwapTest --rpc-url http:
 
 ## Security Considerations
 
-- **Public Vault Configuration**: Anyone can set vault addresses (no owner restrictions)
 - **Input Validation**: All inputs are validated before processing (zero liquidity, invalid currencies)
 - **Single Pool Initialization**: Pool can only be initialized once per hook instance
 - **Precision Handling**: Careful handling of rounding and precision issues with FullMath
