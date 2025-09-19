@@ -70,6 +70,21 @@ The ReHypothecation Hook implements a sophisticated liquidity management system 
    forge script script/01_SimpleSwapOnly.s.sol:SimpleSwapOnly --rpc-url <RPC_URL> --broadcast --legacy
    ```
 
+4. **Run Simple Swap Test (with existing contracts)**
+   ```bash
+   # Test swap functionality with pre-deployed contracts
+   forge script script/01_SimpleSwapOnly.s.sol:SimpleSwapOnly --rpc-url <RPC_URL> --broadcast --legacy
+   ```
+   
+   **Prerequisites for SimpleSwapOnly:**
+   - Update contract addresses in the script file:
+     - `HOOK_ADDRESS`: Your deployed ReHypothecation hook address
+     - `TOKEN0_ADDRESS`: Your deployed token0 address  
+     - `TOKEN1_ADDRESS`: Your deployed token1 address
+   - Ensure you have a `.env` file with `PRIVATE_KEY` set
+   - Make sure you have sufficient token balances for swapping
+   - The script uses Base Sepolia PoolManager by default
+
 ### Adding ReHypothecated Liquidity
 
 ```solidity
@@ -175,6 +190,41 @@ The project includes two deployment scripts:
 - Uses pre-deployed hook and token addresses
 - Executes swap operations to test JIT liquidity
 - Minimal setup for quick testing
+
+**Configuration:**
+- **Contract Addresses**: Update the constants at the top of the script:
+  ```solidity
+  address constant HOOK_ADDRESS = 0x...; // Your deployed hook
+  address constant TOKEN0_ADDRESS = 0x...; // Your token0
+  address constant TOKEN1_ADDRESS = 0x...; // Your token1
+  ```
+- **Swap Parameters**: Customize swap amount and direction:
+  ```solidity
+  uint256 constant SWAP_AMOUNT = 100000; // Amount to swap
+  bool constant ZERO_FOR_ONE = true; // Swap direction
+  ```
+- **Pool Configuration**: Matches your deployed pool settings:
+  ```solidity
+  uint24 constant FEE = 3_00; // 0.3% fee
+  int24 constant TICK_SPACING = 60;
+  ```
+
+**Usage:**
+```bash
+# Basic usage
+forge script script/01_SimpleSwapOnly.s.sol:SimpleSwapOnly --rpc-url <RPC_URL> --broadcast --legacy
+
+# With specific test contract
+forge script script/01_SimpleSwapOnly.s.sol:SimpleSwapOnly --rpc-url <RPC_URL> --broadcast --legacy --tc SimpleSwapOnly
+```
+
+**What it does:**
+1. Validates all contract addresses are set
+2. Creates a `PoolSwapTest` contract for swap execution
+3. Approves tokens for swapping (max allowance)
+4. Executes a swap using the ReHypothecation hook
+5. Logs detailed swap results and balance changes
+6. Tests JIT liquidity provision during the swap
 
 ### Deployment Configuration
 
