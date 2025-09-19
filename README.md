@@ -8,38 +8,44 @@ The ReHypothecation Hook enables liquidity providers to deposit their assets int
 
 The ReHypothecation Hook implements a sophisticated liquidity management system that:
 
-- **Deposits user assets into yield-generating vaults** (ERC4626 compliant)
-- **Provides JIT liquidity** to Uniswap v4 pools during swaps
+- **Deposits user assets into yield-generating vaults** (ERC4626 compliant) for continuous yield generation
+- **Provides JIT liquidity** to Uniswap v4 pools during swaps using vault assets
 - **Automatically manages liquidity** by adding it before swaps and removing it after
-- **Mints ERC20 shares** representing the user's rehypothecated liquidity position
-- **Generates additional yield** on idle liquidity through vault strategies
+- **Mints ERC20 FFRH shares** representing the user's rehypothecated liquidity position
+- **Uses full-range liquidity** (min to max tick) for maximum price coverage
+- **Supports multiple users** with proportional share-based asset management
+- **Public vault configuration** allowing anyone to set vault addresses
 
 ## Architecture
 
 ### Core Components
 
 1. **ReHypothecation Contract** (`src/ReHypothecation.sol`)
-   - Inherits from `BaseHook`, `ERC20`, and `Ownable`
-   - Manages vault interactions and liquidity provision
-   - Implements Uniswap v4 hook callbacks
+   - Inherits from `BaseHook` and `ERC20` (not `Ownable`)
+   - Manages vault interactions and JIT liquidity provision
+   - Implements Uniswap v4 hook callbacks for automated liquidity management
+   - Uses full-range liquidity provision (min to max tick)
 
 2. **Vault Integration**
    - Supports any ERC4626 compliant yield vault
-   - Configurable vault addresses per currency pair
-   - Owner-controlled vault management
+   - Public `setVaults()` function (anyone can configure vaults)
+   - Vault addresses mapped per currency (currency0 → vault0, currency1 → vault1)
+   - Automatic asset deposits/withdrawals during liquidity operations
 
 3. **Hook Callbacks**
-   - `beforeInitialize`: Stores pool configuration
-   - `beforeSwap`: Provides JIT liquidity from vault assets
-   - `afterSwap`: Removes liquidity and returns assets to vaults
+   - `beforeInitialize`: Stores pool configuration and validates single initialization
+   - `beforeSwap`: Calculates and provides JIT liquidity from vault assets
+   - `afterSwap`: Removes all hook-owned liquidity and returns assets to vaults
 
 ### Key Features
 
-- **Just-in-Time Liquidity**: Automatically provides liquidity during swaps
-- **Yield Generation**: Assets earn yield in vaults when not actively trading
-- **ERC20 Shares**: Users receive transferable shares representing their position
-- **Gas Efficient**: Only provides liquidity when needed for swaps
-- **Configurable Vaults**: Owner can set different vault strategies per currency
+- **Just-in-Time Liquidity**: Automatically provides liquidity during swaps using vault assets
+- **Yield Generation**: Assets earn yield in ERC4626 vaults when not actively trading
+- **ERC20 Shares**: Users receive transferable `FFRH` shares representing their position
+- **Gas Efficient**: Only provides liquidity when needed for swaps, then immediately removes it
+- **Full-Range Liquidity**: Uses complete price range (min to max tick) for maximum coverage
+- **Public Vault Configuration**: Anyone can set vault addresses (no owner restrictions)
+- **Automatic Asset Management**: Seamlessly moves assets between vaults and pool
 
 ## Usage
 
@@ -57,52 +63,86 @@ The ReHypothecation Hook implements a sophisticated liquidity management system 
 
 3. **Deploy Hook**
    ```bash
-   forge script script/04_MockTokenUniswapPool.s.sol:MockTokenUniswapPool --rpc-url <RPC_URL> --broadcast --legacy
+   # Deploy with full test setup (recommended for testing)
+   forge script script/00_CorrectedSwapTest.s.sol:CorrectedSwapTest --rpc-url <RPC_URL> --broadcast --legacy
+   
+   # Or use simple swap script with existing contracts
+   forge script script/01_SimpleSwapOnly.s.sol:SimpleSwapOnly --rpc-url <RPC_URL> --broadcast --legacy
    ```
 
 ### Adding ReHypothecated Liquidity
 
 ```solidity
-// Add liquidity to the hook
-uint128 liquidity = 1e15; // Amount of liquidity to provide
-hook.addReHypothecatedLiquidity(liquidity);
+// First, set vault addresses (anyone can call this)
+hook.setVaults(vault0Address, vault1Address);
 
-// User receives ERC20 shares representing their position
+// Approve tokens for the hook contract
+token0.approve(address(hook), amount0);
+token1.approve(address(hook), amount1);
+
+// Add liquidity to the hook (returns BalanceDelta)
+uint128 liquidity = 1e15; // Amount of liquidity to provide
+BalanceDelta delta = hook.addReHypothecatedLiquidity(liquidity);
+
+// User receives ERC20 FFRH shares representing their position
 uint256 shares = hook.balanceOf(user);
 ```
 
 ### Removing ReHypothecated Liquidity
 
 ```solidity
-// Remove all liquidity for a user
-hook.removeReHypothecatedLiquidity(user);
+// Remove all liquidity for a specific user (returns BalanceDelta)
+BalanceDelta delta = hook.removeReHypothecatedLiquidity(user);
 
 // User receives their proportional share of vault assets
+// Assets are automatically withdrawn from vaults and transferred to user
+```
+
+### Hook Configuration
+
+```solidity
+// Get vault address for a specific currency
+address vault0 = hook.getVaultAddress(currency0);
+address vault1 = hook.getVaultAddress(currency1);
+
+// Get tick range (always full range)
+int24 tickLower = hook.getTickLower(); // minUsableTick
+int24 tickUpper = hook.getTickUpper(); // maxUsableTick
 ```
 
 ## Testing
 
-The test suite (`test/ReHypothecation.t.sol`) includes comprehensive coverage:
+The test suite (`test/ReHypothecation.t.sol`) includes comprehensive coverage with 25+ test functions:
 
 ### Core Functionality Tests
-- ✅ Full cycle: add → swap → remove liquidity
-- ✅ JIT liquidity provision during swaps
-- ✅ Vault integration and yield generation
-- ✅ ERC20 share mechanics
+- ✅ **Full cycle test**: Complete add → swap → remove liquidity flow
+- ✅ **JIT liquidity provision**: Automatic liquidity provision during swaps
+- ✅ **Vault integration**: ERC4626 vault deposits and withdrawals
+- ✅ **ERC20 share mechanics**: Transfer, approve, transferFrom functionality
+- ✅ **Pool initialization**: Single initialization validation and pool key storage
 
 ### Edge Case Tests
-- ✅ Zero liquidity handling
-- ✅ Insufficient balance/allowance scenarios
-- ✅ Vault interaction failures
-- ✅ Multiple user management
-- ✅ Reentrancy protection
-- ✅ Gas usage optimization
+- ✅ **Zero liquidity handling**: Proper validation and error messages
+- ✅ **Insufficient balance/allowance**: Graceful failure handling
+- ✅ **Vault interaction failures**: Mock failing vaults for error testing
+- ✅ **Multiple user management**: Concurrent user operations
+- ✅ **Reentrancy protection**: Multiple rapid operations
+- ✅ **Gas usage optimization**: Gas consumption measurement and logging
+- ✅ **Extreme values**: Max uint128, very small amounts
+- ✅ **Precision and rounding**: Small amount handling and accuracy
 
-### Security Tests
-- ✅ Owner-only vault configuration
-- ✅ Proper access controls
-- ✅ Input validation
-- ✅ Precision and rounding handling
+### ERC20 Functionality Tests
+- ✅ **Transfer operations**: Standard ERC20 transfer functionality
+- ✅ **Approval system**: Allowance management and transferFrom
+- ✅ **Zero amount transfers**: Edge case handling
+- ✅ **Self transfers**: Transfer to same address
+- ✅ **Max approval**: Type(uint256).max allowance
+
+### Security and Access Control Tests
+- ✅ **Public vault configuration**: Anyone can set vault addresses
+- ✅ **Input validation**: Proper parameter validation
+- ✅ **Pool key validation**: Currency and configuration checks
+- ✅ **Vault address mapping**: Correct currency-to-vault mapping
 
 Run specific test categories:
 ```bash
@@ -116,15 +156,26 @@ forge test --gas-report
 forge test --match-test test_full_cycle
 ```
 
-## Deployment Script
+## Deployment Scripts
 
-The main deployment script (`script/04_MockTokenUniswapPool.s.sol`) demonstrates:
+The project includes two deployment scripts:
 
-1. **Hook Deployment**: Creates a properly flagged hook contract
-2. **Mock Token Creation**: Deploys test ERC20 tokens
-3. **Vault Setup**: Creates ERC4626 mock vaults
-4. **Pool Initialization**: Sets up the Uniswap v4 pool
+### 1. CorrectedSwapTest Script (`script/00_CorrectedSwapTest.s.sol`)
+
+**Full deployment and testing script that:**
+1. **Hook Deployment**: Creates a properly flagged hook contract using HookMiner
+2. **Mock Token Creation**: Deploys test ERC20 tokens with mint functionality
+3. **Vault Setup**: Creates ERC4626 mock vaults for both currencies
+4. **Pool Initialization**: Sets up the Uniswap v4 pool with correct configuration
 5. **Liquidity Provision**: Adds initial liquidity to the pool
+6. **Swap Testing**: Executes a test swap to verify JIT liquidity provision
+
+### 2. SimpleSwapOnly Script (`script/01_SimpleSwapOnly.s.sol`)
+
+**Lightweight script for testing with existing contracts:**
+- Uses pre-deployed hook and token addresses
+- Executes swap operations to test JIT liquidity
+- Minimal setup for quick testing
 
 ### Deployment Configuration
 
@@ -139,18 +190,21 @@ uint160 flags = uint160(
 // Pool configuration
 uint24 constant FEE = 3_00; // 0.3%
 int24 constant TICK_SPACING = 60;
+
+// Base Sepolia addresses
+address constant POOL_MANAGER = 0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408;
 ```
 
 ## Events
 
-The hook emits several events for tracking:
+The hook emits several events for tracking operations:
 
-- `VaultsSet`: Vault addresses configured
-- `ReHypothecatedLiquidityAdded`: User adds liquidity
-- `ReHypothecatedLiquidityRemoved`: User removes liquidity
-- `PoolInitialized`: Pool configuration stored
-- `LiquidityProvided`: JIT liquidity added during swap
-- `LiquidityRemoved`: JIT liquidity removed after swap
+- `VaultsSet(address indexed vault0, address indexed vault1)`: Vault addresses configured
+- `ReHypothecatedLiquidityAdded(address indexed user, uint128 indexed liquidity, uint256 amount0, uint256 amount1)`: User adds liquidity
+- `ReHypothecatedLiquidityRemoved(address indexed owner, uint128 indexed sharesAmount, uint256 amount0, uint256 amount1)`: User removes liquidity
+- `PoolInitialized(address indexed currency0, address indexed currency1, uint24 indexed fee, int24 tickSpacing)`: Pool configuration stored
+- `LiquidityProvided(bytes32 indexed poolId, uint128 indexed liquidity, uint256 amount0, uint256 amount1)`: JIT liquidity added during swap
+- `LiquidityRemoved(bytes32 indexed poolId, uint128 indexed liquidity, uint256 amount0, uint256 amount1)`: JIT liquidity removed after swap
 
 ## Requirements
 
@@ -167,16 +221,18 @@ For local testing and development:
 anvil --code-size-limit 40000
 
 # Deploy to local network
-forge script script/04_MockTokenUniswapPool.s.sol:MockTokenUniswapPool --rpc-url http://localhost:8545 --broadcast --legacy
+forge script script/00_CorrectedSwapTest.s.sol:CorrectedSwapTest --rpc-url http://localhost:8545 --broadcast --legacy
 ```
 
 ## Security Considerations
 
-- **Owner Controls**: Only the owner can configure vault addresses
-- **Input Validation**: All inputs are validated before processing
-- **Reentrancy Protection**: Functions are protected against reentrancy attacks
-- **Precision Handling**: Careful handling of rounding and precision issues
-- **Vault Integration**: Robust error handling for vault interactions
+- **Public Vault Configuration**: Anyone can set vault addresses (no owner restrictions)
+- **Input Validation**: All inputs are validated before processing (zero liquidity, invalid currencies)
+- **Single Pool Initialization**: Pool can only be initialized once per hook instance
+- **Precision Handling**: Careful handling of rounding and precision issues with FullMath
+- **Vault Integration**: Robust error handling for vault interactions with proper revert handling
+- **ERC20 Compliance**: Full ERC20 standard implementation with proper transfer mechanics
+- **Hook Permissions**: Properly configured hook permissions for Uniswap v4 integration
 
 ## Additional Resources
 
